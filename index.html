@@ -775,13 +775,21 @@ function _doSearch(){
   const q = (document.getElementById('searchQuery').value||'').trim();
   if(!q){ document.getElementById('searchResult').innerHTML=''; return; }
 
+  // 先显示加载状态
+  let html = '<div class="card" style="text-align:center;padding:20px"><div class="spinner"></div><p style="color:#999;margin-top:6px">查询中...</p></div>';
+  document.getElementById('searchResult').innerHTML = html;
+
+  _doSearchAsync(q);
+}
+
+async function _doSearchAsync(q){
   let html = '';
 
   // 1. 查内嵌词典
   const dictKey = Object.keys(DICT).find(k=>k.includes(q)||q.includes(k));
   if(dictKey){
     html += `<div class="card">
-      <span class="tag tag-idiom">📖 ${dictKey}</span>
+      <span class="tag tag-idiom">📖 ${dictKey}（词典）</span>
       <div class="note" style="white-space:pre-line;line-height:1.9">${DICT[dictKey]}</div>
     </div>`;
   }
@@ -801,12 +809,30 @@ function _doSearch(){
       </div>`).join('');
   }
 
-  // 3. 如果都没有，提供在线查链接
+  // 3. 在线查百度百科（公开API代理）
+  try{
+    const url = 'https://api.allorigins.win/raw?url='+encodeURIComponent('https://baike.baidu.com/item/'+encodeURIComponent(q));
+    const resp = await fetch(url);
+    const text = await resp.text();
+    // 提取摘要内容
+    const summary = text.match(/<div[^>]*class="[^"]*para[^"]*"[^>]*>([\s\S]*?)<\/div>/gi);
+    if(summary && summary.length){
+      const cleaned = summary.slice(0,3).map(s=>s.replace(/<[^>]+>/g,'').replace(/\[\d+\]/g,'').trim()).filter(s=>s.length>10).join('\n\n');
+      if(cleaned){
+        html += `<div class="card">
+          <span class="tag tag-idiom">🌐 百度百科</span>
+          <div class="note" style="line-height:1.9">${escHtml(cleaned.slice(0,800))}</div>
+        </div>`;
+      }
+    }
+  }catch(e){}
+
+  // 4. 如果都没有，显示检索链接
   if(!html){
     const enc = encodeURIComponent(q);
     html = `
       <div class="card" style="text-align:center;padding:28px">
-        <p style="color:#999;margin-bottom:16px">词典和本地均未收录</p>
+        <p style="color:#999;margin-bottom:16px">词典和在线均未找到</p>
         <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
           <a href="https://baike.baidu.com/item/${enc}" target="_blank" class="btn btn-outline btn-sm">百度百科</a>
           <a href="https://hanyu.baidu.com/s?wd=${enc}" target="_blank" class="btn btn-outline btn-sm">百度汉语</a>
