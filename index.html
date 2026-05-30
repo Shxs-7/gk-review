@@ -223,6 +223,9 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
       <input type="text" id="searchQuery" placeholder="输入成语或关键词搜索..." oninput="doSearch()">
     </div>
     <div id="searchResult"></div>
+    <div style="text-align:center;margin-top:20px">
+      <a href="http://search.people.com.cn/rmw/GB/bkzzsearch/bkzz_search.jsp" target="_blank" class="btn btn-outline btn-sm">📰 跳转人民网搜索</a>
+    </div>
   </section>
 
   <!-- 设置页 -->
@@ -796,11 +799,9 @@ function _doSearch(){
       return '<div class="card"><span class="tag tag-idiom">'+(e.cat==='idiom'?'成语':'名句')+'</span>'+body+'</div>';
     }).join('');
   }
-  // 3. 人民日报搜索链接（始终显示）
-  const enc = encodeURIComponent(q);
-  html += '<div class="card" style="text-align:center;padding:16px"><p style="font-size:.8rem;color:#888;margin-bottom:10px">查询该词在真题来源中的用法</p><a href="http://search.people.com.cn/rmw/GB/bkzzsearch/bkzz_search.jsp?keyword='+enc+'" target="_blank" class="btn btn-primary btn-sm" style="margin-bottom:6px">📰 人民日报检索</a><br><span style="font-size:.7rem;color:#bbb">查看该词在人民网文章中的实际用例</span></div>';
-  // 4. 如果词典和本地都没有，补充其他链接
+  // 3. 如果词典和本地都没有，补充在线链接
   if(!html.includes('📖')){
+    const enc = encodeURIComponent(q);
     html += '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px"><a href="https://baike.baidu.com/item/'+enc+'" target="_blank" class="btn btn-outline btn-sm">📘 百科</a><a href="https://hanyu.baidu.com/s?wd='+enc+'" target="_blank" class="btn btn-outline btn-sm">📖 汉语</a><a href="https://www.zdic.net/hans/'+enc+'" target="_blank" class="btn btn-outline btn-sm">📚 汉典</a></div>';
   }
   document.getElementById('searchResult').innerHTML = html;
