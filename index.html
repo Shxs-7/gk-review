@@ -186,6 +186,16 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
 
   <!-- 设置 -->
   <section class="page" id="page-settings">
+    <div class="card" style="text-align:center">
+      <div class="stat" style="border:0;display:inline-block;min-width:auto">
+        <div class="num" id="storageSize">-</div>
+        <div class="label">已用空间</div>
+      </div>
+      <div class="stat" style="border:0;display:inline-block;min-width:auto">
+        <div class="num" id="entryCount">0</div>
+        <div class="label">数据条数</div>
+      </div>
+    </div>
     <div class="card">
       <h3 style="margin-bottom:8px;font-weight:500;font-size:1rem">导出备份</h3>
       <p style="color:#888;font-size:.8rem;margin-bottom:12px">保存为 JSON 文件</p>
@@ -273,6 +283,7 @@ function switchPage(name){
   if(name==='review') doRandom();
   if(name==='list') renderList();
   if(name==='add') resetForm();
+  if(name==='settings') showStorage();
 }
 document.querySelectorAll('nav button').forEach(b=>{
   b.addEventListener('click',()=>switchPage(b.dataset.page));
@@ -318,6 +329,14 @@ function resetForm(){
   document.getElementById('quoteNote').value='';
   onCategoryChange();
   document.getElementById('submitBtn').textContent='添加';
+}
+
+function showStorage(){
+  const bytes = new Blob([JSON.stringify(entries)]).size;
+  document.getElementById('entryCount').textContent = entries.length + ' 条';
+  if(bytes < 1024) document.getElementById('storageSize').textContent = bytes + ' B';
+  else if(bytes < 1048576) document.getElementById('storageSize').textContent = (bytes/1024).toFixed(1) + ' KB';
+  else document.getElementById('storageSize').textContent = (bytes/1048576).toFixed(2) + ' MB';
 }
 
 function doRandom(){
