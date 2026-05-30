@@ -147,6 +147,20 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
   font-weight:400; color:#333; margin:0; font-size:.9rem;
 }
 .ocr-result input{margin-top:4px; width:auto}
+
+/* Chat */
+.chat-area{display:flex;flex-direction:column;height:calc(100dvh - 52px)}
+.chat-msgs{flex:1;overflow-y:auto;padding:12px 0}
+.chat-msg{display:flex;margin-bottom:12px}
+.chat-msg.user{justify-content:flex-end}
+.chat-msg.ai{justify-content:flex-start}
+.chat-bubble{max-width:85%;padding:10px 14px;border-radius:16px;font-size:.9rem;line-height:1.6;white-space:pre-line}
+.chat-msg.user .chat-bubble{background:#2563eb;color:#fff;border-bottom-right-radius:4px}
+.chat-msg.ai .chat-bubble{background:#f1f5f9;color:#333;border-bottom-left-radius:4px}
+.chat-input-row{display:flex;gap:8px;padding:10px 0;border-top:1px solid #eee;background:#fff}
+.chat-input-row input{flex:1}
+.chat-empty{text-align:center;padding:60px 20px;color:#bbb}
+.chat-empty .icon{font-size:3rem;margin-bottom:12px}
 </style>
 </head>
 <body>
@@ -156,6 +170,7 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
   <button data-page="add">添加</button>
   <button data-page="list">列表</button>
   <button data-page="search">查询</button>
+  <button data-page="chat">聊天</button>
   <button data-page="settings">设置</button>
 </nav>
 
@@ -228,6 +243,19 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
     <div id="searchResult"></div>
     <div style="text-align:center;margin-top:20px">
       <a href="https://m.baidu.com/s?word=site%3Apeople.com.cn" target="_blank" class="btn btn-outline btn-sm">📰 跳转人民网搜索</a>
+    </div>
+  </section>
+
+  <!-- 聊天页 -->
+  <section class="page" id="page-chat">
+    <div class="chat-area">
+      <div class="chat-msgs" id="chatMsgs">
+        <div class="chat-empty"><div class="icon">💬</div><p>AI 学习助手</p><p style="font-size:.8rem">提问公考相关问题</p></div>
+      </div>
+      <div class="chat-input-row" style="padding:8px 16px">
+        <input type="text" id="chatInput" placeholder="输入你的问题..." onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="btn btn-primary btn-sm" onclick="sendChat()">发送</button>
+      </div>
     </div>
   </section>
 
@@ -978,6 +1006,71 @@ function showToast(msg){
   let t=document.getElementById('toast');
   if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 24px;border-radius:8px;font-size:.85rem;z-index:200;transition:.3s;opacity:0;pointer-events:none';document.body.appendChild(t);}
   t.textContent=msg;t.style.opacity='1';clearTimeout(t._tid);t._tid=setTimeout(()=>{t.style.opacity='0';},1800);
+}
+
+// ==================== 聊天 ====================
+let chatHistory = [];
+
+function sendChat(){
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if(!msg) return;
+  if(!apiKey){ showToast('请先在设置页保存 API Key'); return; }
+
+  // 显示用户消息
+  chatHistory.push({role:'user',content:msg});
+  renderChat();
+  input.value = '';
+
+  // 显示加载
+  document.getElementById('chatMsgs').innerHTML += '<div class="chat-msg ai"><div class="chat-bubble"><div class="spinner"></div></div></div>';
+  scrollChat();
+
+  // 调用 API
+  fetch('https://api.deepseek.com/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
+    body:JSON.stringify({
+      model:'deepseek-chat',
+      messages:[
+        {role:'system',content:'你是公考辅导专家，擅长行测言语理解、申论写作、成语辨析、名句解读。回答简明扼要，300字以内。'},
+        ...chatHistory.slice(-10)
+      ],
+      max_tokens:600,
+      temperature:0.5
+    })
+  }).then(r=>r.json()).then(data=>{
+    if(data.choices && data.choices[0]){
+      chatHistory.push({role:'assistant',content:data.choices[0].message.content});
+    } else {
+      chatHistory.push({role:'assistant',content:'请求失败：'+JSON.stringify(data)});
+    }
+    renderChat();
+  }).catch(e=>{
+    chatHistory.push({role:'assistant',content:'网络错误：'+e.message});
+    renderChat();
+  });
+}
+
+function renderChat(){
+  const msgs = document.getElementById('chatMsgs');
+  if(!chatHistory.length){
+    msgs.innerHTML = '<div class="chat-empty"><div class="icon">💬</div><p>AI 学习助手</p><p style="font-size:.8rem">提问公考相关问题</p></div>';
+    return;
+  }
+  msgs.innerHTML = chatHistory.map(m=>`
+    <div class="chat-msg ${m.role==='user'?'user':'ai'}">
+      <div class="chat-bubble">${escHtml(m.content)}</div>
+    </div>
+  `).join('');
+  scrollChat();
+}
+
+function scrollChat(){
+  setTimeout(()=>{
+    const msgs = document.getElementById('chatMsgs');
+    msgs.scrollTop = msgs.scrollHeight;
+  },100);
 }
 
 // ==================== 初始化 ====================
