@@ -863,7 +863,7 @@ async function _doSearchAsync(q){
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
         body:JSON.stringify({
           model:'deepseek-chat',
-          messages:[{role:'system',content:'你是公考辅导专家。用户查询一个成语或名句时，请按以下格式回答：\n【释义】简明解释（50字内）\n【公考考点】在行测/申论中的考察方式\n【词性及用法】语法特征和搭配\n【真题示例】若有历年真题涉及该词，列出1-2条\n请直接回答，不加多余内容。总字数控制在300字内。'},
+          messages:[{role:'system',content:'你是公考辅导专家。用户查询成语或名句时，按以下格式回答：\n【释义】简明解释\n【公考考点】在行测/申论中的考察方式及易混辨析\n【词性及用法】词性、感情色彩、常见搭配\n【真题示例】涉及该词的真题案例（如有）\n回答简洁，总字数300字内。'},
                     {role:'user',content:q}],
           max_tokens:600,
           temperature:0.3
@@ -872,7 +872,13 @@ async function _doSearchAsync(q){
       const data = await resp.json();
       if(data.choices && data.choices[0]){
         const aiText = data.choices[0].message.content;
-        html += '<div class="card"><span class="tag tag-idiom">🤖 AI 解析</span><div class="note" style="white-space:pre-line;line-height:1.9">'+escHtml(aiText)+'</div></div>';
+        const hasSaved = entries.find(e=>e.content===q);
+        const saveBtn = hasSaved
+          ? '<span style="font-size:.75rem;color:#16a34a">✅ 已保存</span>'
+          : '<button class="btn btn-green btn-sm" onclick="saveAIResult(this)">📥 保存到笔记</button>';
+        html += '<div class="card" id="aiCard"><span class="tag tag-idiom">🤖 AI 解析</span><div class="note" style="white-space:pre-line;line-height:1.9">'+escHtml(aiText)+'</div><div style="text-align:right;margin-top:10px">'+saveBtn+'</div></div>';
+        window._aiQuery = q;
+        window._aiText = aiText;
       }
     }catch(e){}
   }
@@ -882,6 +888,52 @@ async function _doSearchAsync(q){
     html += '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px"><a href="https://baike.baidu.com/item/'+enc+'" target="_blank" class="btn btn-outline btn-sm">📘 百科</a><a href="https://hanyu.baidu.com/s?wd='+enc+'" target="_blank" class="btn btn-outline btn-sm">📖 汉语</a><a href="https://www.zdic.net/hans/'+enc+'" target="_blank" class="btn btn-outline btn-sm">📚 汉典</a></div>';
   }
   document.getElementById('searchResult').innerHTML = html;
+}
+
+function saveAIResult(btn){
+  const q = window._aiQuery || '';
+  const aiText = window._aiText || '';
+  if(!q || !aiText) return;
+
+  // 去重
+  if(entries.find(e=>e.content===q)){
+    showToast('已存在，跳过');
+    return;
+  }
+
+  // 解析 AI 各部分
+  const parse = (text, label)=>{
+    const re = new RegExp('【'+label+'】([\\s\\S]*?)(?=【|$)','i');
+    const m = text.match(re);
+    return m ? m[1].trim() : '';
+  };
+  const meaning = parse(aiText,'释义');
+  const exam = parse(aiText,'公考考点');
+  const usage = parse(aiText,'词性及用法');
+  const real = parse(aiText,'真题示例');
+
+  // 组装完整释义
+  let fullMeaning = '';
+  if(meaning) fullMeaning += '【释义】\n'+meaning+'\n';
+  if(exam) fullMeaning += '\n【公考考点】\n'+exam+'\n';
+  if(usage) fullMeaning += '\n【词性及用法】\n'+usage+'\n';
+  if(real) fullMeaning += '\n【真题示例】\n'+real+'\n';
+  if(!fullMeaning) fullMeaning = aiText;
+
+  entries.push({
+    id:nextId(),
+    cat:'idiom',
+    content:q,
+    meaning:fullMeaning.trim(),
+    note:'',
+    mastered:false,
+    reviewCount:0,
+    lastReview:null,
+    ts:Date.now()
+  });
+  save();
+  showToast('已保存：'+q);
+  if(btn) btn.outerHTML = '<span style="font-size:.75rem;color:#16a34a">✅ 已保存</span>';
 }
 
 function deleteEntry(id){ const e=entries.find(x=>x.id===id);if(!e)return;const label=e.cat==='idiom'?`成语「${e.content}」`:`名句「${e.content.slice(0,20)}...」`;showModal('确认删除',`删除 ${label}？`,()=>{entries=entries.filter(x=>x.id!==id);save();if(currentPage==='review')doRandom();if(currentPage==='list')renderList();});}
