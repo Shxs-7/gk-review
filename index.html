@@ -152,6 +152,7 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
   <button class="active" data-page="review">复习</button>
   <button data-page="add">添加</button>
   <button data-page="list">列表</button>
+  <button data-page="search">查询</button>
   <button data-page="settings">设置</button>
 </nav>
 
@@ -211,6 +212,14 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
     </div>
     <div class="stats" id="statsBar"></div>
     <div id="listDisplay"></div>
+  </section>
+
+  <!-- 查询页 -->
+  <section class="page" id="page-search">
+    <div style="margin-bottom:14px">
+      <input type="text" id="searchQuery" placeholder="输入成语或关键词搜索..." oninput="doSearch()">
+    </div>
+    <div id="searchResult"></div>
   </section>
 
   <!-- 设置页 -->
@@ -352,10 +361,12 @@ function switchPage(name){
   document.querySelector(`[data-page="${name}"]`).classList.add('active');
   document.getElementById('fabBtn').style.display = (name==='add'||name==='list')?'none':'flex';
   document.getElementById('camBtn').style.display = (name==='add')?'flex':'none';
+  document.getElementById('fabBtn').style.display = (name==='add'||name==='list'||name==='search')?'none':'flex';
   if(name==='review') doRandom();
   if(name==='list') renderList();
   if(name==='add') resetForm();
   if(name==='settings') showStorage();
+  if(name==='search'){ document.getElementById('searchQuery').value=''; document.getElementById('searchResult').innerHTML=''; }
 }
 document.querySelectorAll('nav button').forEach(b=>{
   b.addEventListener('click',()=>switchPage(b.dataset.page));
@@ -545,6 +556,60 @@ function toggleMastered(id){
 }
 
 function editEntry(id){ /* 同上 */ const e=entries.find(x=>x.id===id);if(!e)return;editId=id;switchPage('add');document.getElementById('addCategory').value=e.cat;if(e.cat==='idiom'){document.getElementById('idiomWord').value=e.content||'';document.getElementById('idiomMeaning').value=e.meaning||'';}else{document.getElementById('quoteText').value=e.content||'';document.getElementById('quoteNote').value=e.note||'';}onCategoryChange();document.getElementById('submitBtn').textContent='保存';showToast('修改后点击保存');}
+
+// ==================== 查询 ====================
+function doSearch(){
+  const q = (document.getElementById('searchQuery').value||'').trim();
+  if(!q){ document.getElementById('searchResult').innerHTML=''; return; }
+
+  // 搜本地
+  const matched = entries.filter(e=>
+    e.content.includes(q) || (e.meaning||'').includes(q) || (e.note||'').includes(q)
+  );
+
+  let html = '';
+  if(matched.length){
+    html += '<div style="font-size:.8rem;color:#888;margin-bottom:10px">本地匹配 '+matched.length+' 条</div>';
+    html += matched.map(e=>`
+      <div class="card">
+        <span class="tag tag-idiom">${e.cat==='idiom'?'成语':'名句'}</span>
+        <div class="content" style="font-size:1.1rem">${e.content}</div>
+        ${e.meaning?`<div class="note" style="white-space:pre-line">${e.meaning}</div>`:''}
+        ${e.note?`<div class="note" style="white-space:pre-line">${e.note}</div>`:''}
+      </div>`).join('');
+  } else {
+    html += '<div class="card" style="text-align:center;padding:28px"><p style="color:#999">本地未找到</p></div>';
+  }
+
+  // 外部查询链接
+  const enc = encodeURIComponent(q);
+  html += `
+    <div style="font-size:.8rem;color:#888;margin:14px 0 8px">在线查询</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <a href="https://baike.baidu.com/item/${enc}" target="_blank" style="text-decoration:none">
+        <div class="card" style="text-align:center;padding:14px;font-size:.85rem;color:#2563eb">
+          📘 百度百科<br><span style="font-size:.7rem;color:#999">释义·出处·典故</span>
+        </div>
+      </a>
+      <a href="https://hanyu.baidu.com/s?wd=${enc}" target="_blank" style="text-decoration:none">
+        <div class="card" style="text-align:center;padding:14px;font-size:.85rem;color:#2563eb">
+          📖 百度汉语<br><span style="font-size:.7rem;color:#999">详细解释·例句</span>
+        </div>
+      </a>
+      <a href="https://www.zdic.net/hans/${enc}" target="_blank" style="text-decoration:none">
+        <div class="card" style="text-align:center;padding:14px;font-size:.85rem;color:#2563eb">
+          📚 汉典<br><span style="font-size:.7rem;color:#999">权威词典</span>
+        </div>
+      </a>
+      <a href="https://m.baidu.com/s?word=${enc}+公考" target="_blank" style="text-decoration:none">
+        <div class="card" style="text-align:center;padding:14px;font-size:.85rem;color:#2563eb">
+          🎯 搜公考真题<br><span style="font-size:.7rem;color:#999">真题·搭配·考点</span>
+        </div>
+      </a>
+    </div>`;
+
+  document.getElementById('searchResult').innerHTML = html;
+}
 
 function deleteEntry(id){ const e=entries.find(x=>x.id===id);if(!e)return;const label=e.cat==='idiom'?`成语「${e.content}」`:`名句「${e.content.slice(0,20)}...」`;showModal('确认删除',`删除 ${label}？`,()=>{entries=entries.filter(x=>x.id!==id);save();if(currentPage==='review')doRandom();if(currentPage==='list')renderList();});}
 
