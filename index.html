@@ -405,7 +405,7 @@ function switchPage(name){
   document.querySelector(`[data-page="${name}"]`).classList.add('active');
   document.getElementById('fabBtn').style.display = (name==='add'||name==='list')?'none':'flex';
   document.getElementById('camBtn').style.display = (name==='add')?'flex':'none';
-  document.getElementById('fabBtn').style.display = (name==='add'||name==='list'||name==='search')?'none':'flex';
+  document.getElementById('fabBtn').style.display = (name==='add'||name==='list'||name==='search'||name==='chat')?'none':'flex';
   if(name==='review') doRandom();
   if(name==='list') renderList();
   if(name==='add') resetForm();
