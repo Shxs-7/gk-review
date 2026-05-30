@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="复习">
@@ -774,73 +777,30 @@ function doSearch(){
 function _doSearch(){
   const q = (document.getElementById('searchQuery').value||'').trim();
   if(!q){ document.getElementById('searchResult').innerHTML=''; return; }
-
-  // 先显示加载状态
-  let html = '<div class="card" style="text-align:center;padding:20px"><div class="spinner"></div><p style="color:#999;margin-top:6px">查询中...</p></div>';
-  document.getElementById('searchResult').innerHTML = html;
-
-  _doSearchAsync(q);
-}
-
-async function _doSearchAsync(q){
   let html = '';
-
-  // 1. 查内嵌词典
+  // 1. check dictionary
   const dictKey = Object.keys(DICT).find(k=>k.includes(q)||q.includes(k));
   if(dictKey){
-    html += `<div class="card">
-      <span class="tag tag-idiom">📖 ${dictKey}（词典）</span>
-      <div class="note" style="white-space:pre-line;line-height:1.9">${DICT[dictKey]}</div>
-    </div>`;
+    html += '<div class="card"><span class="tag tag-idiom">📖 '+dictKey+'（词典）</span><div class="note" style="white-space:pre-line;line-height:1.9">'+DICT[dictKey]+'</div></div>';
   }
-
-  // 2. 查本地数据
+  // 2. check local
   const matched = entries.filter(e=>
     e.content.includes(q) || (e.meaning||'').includes(q) || (e.note||'').includes(q)
   );
   if(matched.length){
     html += '<div style="font-size:.8rem;color:#888;margin-bottom:8px">本地笔记 '+matched.length+' 条</div>';
-    html += matched.map(e=>`
-      <div class="card">
-        <span class="tag tag-idiom">${e.cat==='idiom'?'成语':'名句'}</span>
-        <div class="content" style="font-size:1.1rem">${e.content}</div>
-        ${e.meaning?`<div class="note" style="white-space:pre-line">${e.meaning}</div>`:''}
-        ${e.note?`<div class="note" style="white-space:pre-line">${e.note}</div>`:''}
-      </div>`).join('');
+    html += matched.map(e=>{
+      let body = e.cat==='idiom'
+        ? '<div class="content" style="font-size:1.1rem">'+escHtml(e.content)+'</div>'+(e.meaning?'<div class="note" style="white-space:pre-line">'+escHtml(e.meaning)+'</div>':'')
+        : '<div class="content" style="font-size:1.1rem">'+escHtml(e.content)+'</div>'+(e.note?'<div class="note" style="white-space:pre-line">'+escHtml(e.note)+'</div>':'');
+      return '<div class="card"><span class="tag tag-idiom">'+(e.cat==='idiom'?'成语':'名句')+'</span>'+body+'</div>';
+    }).join('');
   }
-
-  // 3. 在线查百度百科（公开API代理）
-  try{
-    const url = 'https://api.allorigins.win/raw?url='+encodeURIComponent('https://baike.baidu.com/item/'+encodeURIComponent(q));
-    const resp = await fetch(url);
-    const text = await resp.text();
-    // 提取摘要内容
-    const summary = text.match(/<div[^>]*class="[^"]*para[^"]*"[^>]*>([\s\S]*?)<\/div>/gi);
-    if(summary && summary.length){
-      const cleaned = summary.slice(0,3).map(s=>s.replace(/<[^>]+>/g,'').replace(/\[\d+\]/g,'').trim()).filter(s=>s.length>10).join('\n\n');
-      if(cleaned){
-        html += `<div class="card">
-          <span class="tag tag-idiom">🌐 百度百科</span>
-          <div class="note" style="line-height:1.9">${escHtml(cleaned.slice(0,800))}</div>
-        </div>`;
-      }
-    }
-  }catch(e){}
-
-  // 4. 如果都没有，显示检索链接
+  // 3. fallback links
   if(!html){
     const enc = encodeURIComponent(q);
-    html = `
-      <div class="card" style="text-align:center;padding:28px">
-        <p style="color:#999;margin-bottom:16px">词典和在线均未找到</p>
-        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-          <a href="https://baike.baidu.com/item/${enc}" target="_blank" class="btn btn-outline btn-sm">百度百科</a>
-          <a href="https://hanyu.baidu.com/s?wd=${enc}" target="_blank" class="btn btn-outline btn-sm">百度汉语</a>
-          <a href="https://www.zdic.net/hans/${enc}" target="_blank" class="btn btn-outline btn-sm">汉典</a>
-        </div>
-      </div>`;
+    html = '<div class="card" style="text-align:center;padding:28px"><p style="color:#999;margin-bottom:16px">词典未收录，点击下方查看</p><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><a href="https://baike.baidu.com/item/'+enc+'" target="_blank" class="btn btn-outline btn-sm">📘 百科</a><a href="https://hanyu.baidu.com/s?wd='+enc+'" target="_blank" class="btn btn-outline btn-sm">📖 汉语</a><a href="https://www.zdic.net/hans/'+enc+'" target="_blank" class="btn btn-outline btn-sm">📚 汉典</a></div></div>';
   }
-
   document.getElementById('searchResult').innerHTML = html;
 }
 
