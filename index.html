@@ -295,6 +295,10 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
     <div class="card">
       <h3 style="margin-bottom:8px;font-weight:500;font-size:1rem">DeepSeek API Key</h3>
       <p style="color:#888;font-size:.8rem;margin-bottom:8px">AI 智能解析成语，仅存你手机本地</p>
+      <select id="apiModelSelect" style="margin-bottom:8px">
+        <option value="deepseek-chat">DeepSeek V4 Pro (1M 上下文)</option>
+        <option value="deepseek-reasoner">DeepSeek R1 (推理增强)</option>
+      </select>
       <input type="password" id="apiKeyInput" placeholder="sk-..." style="margin-bottom:8px">
       <button class="btn btn-primary btn-sm" onclick="saveApiKey()">保存</button>
       <span id="apiKeyStatus" style="font-size:.75rem;color:#16a34a;margin-left:8px"></span>
@@ -602,15 +606,20 @@ function toggleMastered(id){
 function editEntry(id){ /* 同上 */ const e=entries.find(x=>x.id===id);if(!e)return;editId=id;switchPage('add');document.getElementById('addCategory').value=e.cat;if(e.cat==='idiom'){document.getElementById('idiomWord').value=e.content||'';document.getElementById('idiomMeaning').value=e.meaning||'';}else{document.getElementById('quoteText').value=e.content||'';document.getElementById('quoteNote').value=e.note||'';}onCategoryChange();document.getElementById('submitBtn').textContent='保存';showToast('修改后点击保存');}
 
 // ==================== API Key ====================
-let apiKey = '';
+let apiKey = '', apiModel = 'deepseek-chat';
 function loadApiKey(){
   apiKey = localStorage.getItem('gk_api_key')||'';
+  apiModel = localStorage.getItem('gk_api_model')||'deepseek-chat';
   const inp = document.getElementById('apiKeyInput');
+  const sel = document.getElementById('apiModelSelect');
   if(inp) inp.value = apiKey;
+  if(sel) sel.value = apiModel;
 }
 function saveApiKey(){
   apiKey = document.getElementById('apiKeyInput').value.trim();
+  apiModel = document.getElementById('apiModelSelect').value;
   localStorage.setItem('gk_api_key', apiKey);
+  localStorage.setItem('gk_api_model', apiModel);
   document.getElementById('apiKeyStatus').textContent = '已保存';
   setTimeout(()=>{ document.getElementById('apiKeyStatus').textContent=''; },2000);
 }
@@ -862,7 +871,7 @@ async function _doSearchAsync(q){
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
         body:JSON.stringify({
-          model:'deepseek-chat',
+          model:apiModel,
           messages:[{role:'system',content:'你是公考辅导专家。用户查询成语或名句时，按以下格式回答：\n【释义】简明解释\n【公考考点】在行测/申论中的考察方式及易混辨析\n【词性及用法】词性、感情色彩、常见搭配\n【真题示例】涉及该词的真题案例（如有）\n回答简洁，总字数300字内。'},
                     {role:'user',content:q}],
           max_tokens:600,
@@ -1083,7 +1092,7 @@ function sendChat(){
     method:'POST',
     headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
     body:JSON.stringify({
-      model:'deepseek-chat',
+      model:apiModel,
       messages:[
         {role:'system',content:'你是公考辅导专家，擅长行测言语理解、申论写作、成语辨析、名句解读。回答简明扼要，300字以内。'},
         ...chatHistory.slice(-10)
