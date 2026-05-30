@@ -265,6 +265,13 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
     </div>
 
     <div class="card">
+      <h3 style="margin-bottom:8px;font-weight:500;font-size:1rem">DeepSeek API Key</h3>
+      <p style="color:#888;font-size:.8rem;margin-bottom:8px">AI 智能解析成语，仅存你手机本地</p>
+      <input type="password" id="apiKeyInput" placeholder="sk-..." style="margin-bottom:8px">
+      <button class="btn btn-primary btn-sm" onclick="saveApiKey()">保存</button>
+      <span id="apiKeyStatus" style="font-size:.75rem;color:#16a34a;margin-left:8px"></span>
+    </div>
+    <div class="card">
       <h3 style="margin-bottom:8px;font-weight:500;font-size:1rem">导出备份</h3>
       <p style="color:#888;font-size:.8rem;margin-bottom:12px">保存为 JSON 文件</p>
       <button class="btn btn-outline btn-block" onclick="exportData()">导出</button>
@@ -374,7 +381,7 @@ function switchPage(name){
   if(name==='review') doRandom();
   if(name==='list') renderList();
   if(name==='add') resetForm();
-  if(name==='settings') showStorage();
+  if(name==='settings'){ showStorage(); loadApiKey(); }
   if(name==='search'){ document.getElementById('searchQuery').value=''; document.getElementById('searchResult').innerHTML=''; }
 }
 document.querySelectorAll('nav button').forEach(b=>{
@@ -565,6 +572,20 @@ function toggleMastered(id){
 }
 
 function editEntry(id){ /* 同上 */ const e=entries.find(x=>x.id===id);if(!e)return;editId=id;switchPage('add');document.getElementById('addCategory').value=e.cat;if(e.cat==='idiom'){document.getElementById('idiomWord').value=e.content||'';document.getElementById('idiomMeaning').value=e.meaning||'';}else{document.getElementById('quoteText').value=e.content||'';document.getElementById('quoteNote').value=e.note||'';}onCategoryChange();document.getElementById('submitBtn').textContent='保存';showToast('修改后点击保存');}
+
+// ==================== API Key ====================
+let apiKey = '';
+function loadApiKey(){
+  apiKey = localStorage.getItem('gk_api_key')||'';
+  const inp = document.getElementById('apiKeyInput');
+  if(inp) inp.value = apiKey;
+}
+function saveApiKey(){
+  apiKey = document.getElementById('apiKeyInput').value.trim();
+  localStorage.setItem('gk_api_key', apiKey);
+  document.getElementById('apiKeyStatus').textContent = '已保存';
+  setTimeout(()=>{ document.getElementById('apiKeyStatus').textContent=''; },2000);
+}
 
 // ==================== 查询 ====================
 // 内嵌公考高频成语词典（释义 + 易错点 + 真题搭配）
@@ -783,6 +804,10 @@ function doSearch(){
 function _doSearch(){
   const q = (document.getElementById('searchQuery').value||'').trim();
   if(!q){ document.getElementById('searchResult').innerHTML=''; return; }
+  document.getElementById('searchResult').innerHTML = '<div class="card" style="text-align:center;padding:20px"><div class="spinner"></div><p style="color:#999;margin-top:6px">查询中...</p></div>';
+  _doSearchAsync(q);
+}
+async function _doSearchAsync(q){
   let html = '';
   // 1. check dictionary
   const dictKey = Object.keys(DICT).find(k=>k.includes(q)||q.includes(k));
@@ -802,8 +827,29 @@ function _doSearch(){
       return '<div class="card"><span class="tag tag-idiom">'+(e.cat==='idiom'?'成语':'名句')+'</span>'+body+'</div>';
     }).join('');
   }
-  // 3. 如果词典和本地都没有，补充在线链接
-  if(!html.includes('📖')){
+  // 3. call DeepSeek API
+  if(apiKey){
+    try{
+      const resp = await fetch('https://api.deepseek.com/v1/chat/completions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
+        body:JSON.stringify({
+          model:'deepseek-chat',
+          messages:[{role:'system',content:'你是公考辅导专家。用户查询一个成语或名句时，请按以下格式回答：\n【释义】简明解释（50字内）\n【公考考点】在行测/申论中的考察方式\n【词性及用法】语法特征和搭配\n【真题示例】若有历年真题涉及该词，列出1-2条\n请直接回答，不加多余内容。总字数控制在300字内。'},
+                    {role:'user',content:q}],
+          max_tokens:600,
+          temperature:0.3
+        })
+      });
+      const data = await resp.json();
+      if(data.choices && data.choices[0]){
+        const aiText = data.choices[0].message.content;
+        html += '<div class="card"><span class="tag tag-idiom">🤖 AI 解析</span><div class="note" style="white-space:pre-line;line-height:1.9">'+escHtml(aiText)+'</div></div>';
+      }
+    }catch(e){}
+  }
+  // 4. fallback links
+  if(!html.includes('📖') && !html.includes('🤖')){
     const enc = encodeURIComponent(q);
     html += '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px"><a href="https://baike.baidu.com/item/'+enc+'" target="_blank" class="btn btn-outline btn-sm">📘 百科</a><a href="https://hanyu.baidu.com/s?wd='+enc+'" target="_blank" class="btn btn-outline btn-sm">📖 汉语</a><a href="https://www.zdic.net/hans/'+enc+'" target="_blank" class="btn btn-outline btn-sm">📚 汉典</a></div>';
   }
@@ -935,7 +981,7 @@ function showToast(msg){
 }
 
 // ==================== 初始化 ====================
-migrate(); seedData(); onCategoryChange(); doRandom();
+migrate(); seedData(); loadApiKey(); onCategoryChange(); doRandom();
 </script>
 </body>
 </html>
