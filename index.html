@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="公考复习">
+<meta name="apple-mobile-web-app-title" content="复习">
 <title>公考复习</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -13,8 +13,8 @@ html{font-size:16px}
 body{
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
   background:#f8f9fa; color:#333; min-height:100dvh;
+  overflow-x:hidden;
 }
-
 nav{
   display:flex; background:#fff; position:sticky; top:0; z-index:9;
   border-bottom:1px solid #eee;
@@ -25,28 +25,20 @@ nav button{
   transition:.2s;
 }
 nav button.active{color:#2563eb;border-bottom-color:#2563eb;font-weight:500}
-
 main{padding:16px;max-width:700px;margin:0 auto}
 .page{display:none}
 .page.active{display:block}
 
-/* Card */
 .card{
   background:#fff; border-radius:12px; padding:20px 18px;
   margin-bottom:12px; border:1px solid #eee;
 }
-.card .tag{display:inline-block;padding:2px 10px;border-radius:10px;font-size:.7rem;margin-bottom:10px}
+.tag{display:inline-block;padding:2px 10px;border-radius:10px;font-size:.7rem;margin-bottom:8px}
 .tag-idiom{background:#e8f0fe;color:#2563eb}
 .tag-quote{background:#e8f0fe;color:#2563eb}
-.card .content{font-size:1.2rem;line-height:1.7;margin-bottom:6px}
-.card .note{font-size:.85rem;color:#777;line-height:1.6}
+.tag-mastered{background:#e8fce8;color:#1a7a1a}
+.tag-unmastered{background:#fef3e0;color:#b85c00}
 
-.random-card{text-align:center;padding:36px 20px}
-.random-card .content{font-size:1.5rem;margin-bottom:10px;color:#1e293b}
-.random-card .meaning{font-size:1.05rem;color:#2563eb;line-height:1.8;margin-bottom:12px}
-.random-card .note{font-size:1rem;color:#555;margin-bottom:12px;line-height:1.8}
-
-/* Button */
 .btn{
   display:inline-block;padding:10px 24px;border:none;border-radius:8px;
   font-size:.9rem;cursor:pointer;transition:.2s;font-weight:500;
@@ -57,8 +49,11 @@ main{padding:16px;max-width:700px;margin:0 auto}
 .btn-outline:active{background:#eef3ff}
 .btn-sm{padding:6px 14px;font-size:.8rem;border-radius:6px}
 .btn-block{display:block;width:100%;text-align:center}
+.btn-green{background:#16a34a;color:#fff}
+.btn-green:active{background:#15803d}
+.btn-orange{background:#ea580c;color:#fff}
+.btn-orange:active{background:#c2410c}
 
-/* Form */
 input,textarea,select{
   width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:8px;
   font-size:.95rem;font-family:inherit;background:#fff;transition:.2s;
@@ -78,7 +73,6 @@ label{display:block;font-size:.8rem;font-weight:500;color:#666;margin:12px 0 5px
 .stat .num{font-size:1.3rem;font-weight:600;color:#2563eb}
 .stat .label{font-size:.7rem;color:#999;margin-top:3px}
 
-/* Modal */
 .modal-overlay{
   display:none;position:fixed;top:0;left:0;right:0;bottom:0;
   background:rgba(0,0,0,.35);z-index:100;justify-content:center;
@@ -92,7 +86,6 @@ label{display:block;font-size:.8rem;font-weight:500;color:#666;margin:12px 0 5px
 .modal h3{margin-bottom:10px;font-weight:500}
 .modal .btn{margin:5px}
 
-/* FAB */
 .fab{
   position:fixed;bottom:24px;right:24px;width:52px;height:52px;
   border-radius:50%;background:#2563eb;color:#fff;border:none;
@@ -101,6 +94,10 @@ label{display:block;font-size:.8rem;font-weight:500;color:#666;margin:12px 0 5px
 }
 .fab:active{transform:scale(.9)}
 
+.fab-cam{
+  bottom:88px; background:#16a34a;
+}
+
 .empty{text-align:center;padding:40px 20px;color:#bbb}
 .empty .icon{font-size:2.5rem;margin-bottom:10px}
 
@@ -108,6 +105,45 @@ label{display:block;font-size:.8rem;font-weight:500;color:#666;margin:12px 0 5px
 .form-group.hidden{display:none}
 
 hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
+
+/* ============ 翻转卡片 ============ */
+.flip-container{
+  perspective:1000px;
+  margin-bottom:12px;
+}
+.flip-card{
+  position:relative; min-height:200px;
+  transition:transform .4s ease;
+  transform-style:preserve-3d;
+}
+.flip-card.flipped{transform:rotateY(180deg)}
+.flip-face{
+  position:absolute; top:0; left:0; width:100%; min-height:200px;
+  background:#fff; border-radius:12px; padding:36px 20px;
+  border:1px solid #eee; text-align:center;
+  backface-visibility:hidden;
+  display:flex; flex-direction:column; justify-content:center; align-items:center;
+}
+.flip-front{ z-index:2; cursor:pointer; }
+.flip-back{ transform:rotateY(180deg); }
+.flip-front .content{font-size:1.6rem;color:#1e293b;margin-bottom:8px}
+.flip-front .hint{font-size:.75rem;color:#bbb;margin-top:12px}
+.flip-back .content{font-size:1.05rem;color:#2563eb;line-height:1.8;white-space:pre-line}
+
+/* OCR loading */
+.spinner{
+  display:inline-block; width:20px; height:20px; border:2px solid #e2e8f0;
+  border-top-color:#2563eb; border-radius:50%; animation:spin .6s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.ocr-result{max-height:200px;overflow-y:auto}
+.ocr-result label{
+  display:flex; align-items:flex-start; gap:8px; cursor:pointer;
+  padding:8px 0; border-bottom:1px solid #f0f0f0;
+  font-weight:400; color:#333; margin:0; font-size:.9rem;
+}
+.ocr-result input{margin-top:4px; width:auto}
 </style>
 </head>
 <body>
@@ -120,20 +156,21 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
 </nav>
 
 <main>
-  <!-- 复习 -->
+  <!-- 复习页 -->
   <section class="page active" id="page-review">
     <div style="display:flex;gap:8px;margin-bottom:14px">
       <select id="reviewFilter" style="flex:1" onchange="doRandom()">
         <option value="all">全部</option>
         <option value="idiom">成语</option>
         <option value="quote">名句</option>
+        <option value="unmastered">未掌握</option>
       </select>
       <button class="btn btn-primary btn-sm" onclick="doRandom()">随机</button>
     </div>
     <div id="randomDisplay"></div>
   </section>
 
-  <!-- 添加 -->
+  <!-- 添加页 -->
   <section class="page" id="page-add">
     <form id="addForm" onsubmit="addEntry(event)">
       <label>分类</label>
@@ -160,7 +197,7 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
     </form>
   </section>
 
-  <!-- 列表 -->
+  <!-- 列表页 -->
   <section class="page" id="page-list">
     <div class="search-bar">
       <input id="searchInput" placeholder="搜索..." oninput="renderList()">
@@ -168,13 +205,15 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
         <option value="all">全部</option>
         <option value="idiom">成语</option>
         <option value="quote">名句</option>
+        <option value="mastered">已掌握</option>
+        <option value="unmastered">未掌握</option>
       </select>
     </div>
     <div class="stats" id="statsBar"></div>
     <div id="listDisplay"></div>
   </section>
 
-  <!-- 设置 -->
+  <!-- 设置页 -->
   <section class="page" id="page-settings">
     <div class="card" style="text-align:center">
       <div class="stat" style="border:0;display:inline-block;min-width:auto">
@@ -185,7 +224,28 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
         <div class="num" id="entryCount">0</div>
         <div class="label">数据条数</div>
       </div>
+      <div class="stat" style="border:0;display:inline-block;min-width:auto">
+        <div class="num" id="masteredCount">0</div>
+        <div class="label">已掌握</div>
+      </div>
     </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:8px;font-weight:500;font-size:1rem">批量导入</h3>
+      <p style="color:#888;font-size:.8rem;margin-bottom:8px">每行一条，格式：成语|释义</p>
+      <textarea id="batchInput" placeholder="差强人意|大体上还能使人满意
+首当其冲|最先受到攻击或遭遇灾难
+为天地立心|张载"横渠四句""></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <select id="batchCategory" style="width:auto">
+          <option value="idiom">导入为成语</option>
+          <option value="quote">导入为名句</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="batchImport()">导入</button>
+      </div>
+      <p id="batchResult" style="font-size:.75rem;color:#16a34a;margin-top:6px"></p>
+    </div>
+
     <div class="card">
       <h3 style="margin-bottom:8px;font-weight:500;font-size:1rem">导出备份</h3>
       <p style="color:#888;font-size:.8rem;margin-bottom:12px">保存为 JSON 文件</p>
@@ -202,10 +262,32 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
       <button class="btn btn-outline btn-block" style="border-color:#e2e8f0;color:#999" onclick="confirmClear()">清空</button>
     </div>
   </section>
+
+  <!-- OCR 弹窗 -->
+  <div class="modal-overlay" id="ocrModal">
+    <div class="modal" style="max-width:90vw">
+      <h3>相机识别</h3>
+      <input type="file" accept="image/*" capture="environment" id="ocrInput" onchange="runOCR(event)" style="font-size:.85rem;margin-bottom:12px">
+      <div id="ocrStatus"></div>
+      <div class="ocr-result" id="ocrResult"></div>
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <select id="ocrCategory" style="width:auto">
+          <option value="idiom">添加为成语</option>
+          <option value="quote">添加为名句</option>
+        </select>
+        <button class="btn btn-primary btn-sm" id="ocrAddBtn" onclick="addOCRSelection()">添加选中</button>
+      </div>
+      <p id="ocrMsg" style="font-size:.75rem;color:#16a34a;margin-top:6px"></p>
+      <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="closeOCR()">关闭</button>
+    </div>
+  </div>
 </main>
 
+<!-- 浮动按钮 -->
 <button class="fab" onclick="switchPage('add')" id="fabBtn">+</button>
+<button class="fab fab-cam" onclick="openOCR()" id="camBtn">📷</button>
 
+<!-- 确认弹窗 -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <h3 id="modalTitle"></h3>
@@ -215,45 +297,43 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
-const STORAGE_KEY = 'gk_review_v2';
+// ==================== 数据模型 ====================
+// {cat, content, meaning, note, mastered:false, reviewCount:0, lastReview:null, ts}
+const STORAGE_KEY = 'gk_review_v3';
 let entries = [], editId = null;
 
-function load(){
-  let raw = localStorage.getItem(STORAGE_KEY);
-  if(!raw){
-    raw = localStorage.getItem('gk_review_data');
-    if(raw){
-      try{
-        const old = JSON.parse(raw);
-        entries = old.map(o=>({
-          id:o.id,cat:o.cat,content:o.content,
-          meaning:o.cat==='idiom'?(o.note||''):'',
-          note:o.cat==='quote'?(o.note||''):'',
-          ts:o.ts
-        }));
-        save(); localStorage.removeItem('gk_review_data'); return;
-      }catch(e){}
-    }
-    entries = []; save(); return;
-  }
-  try{ entries = JSON.parse(raw) || []; }catch(e){ entries = []; }
-  if(!entries.length){
-    entries = [
-      {id:1,cat:'idiom',content:'差强人意',meaning:'大体上还能使人满意。\n⚠ 易错：不是"让人不满意"。',ts:Date.now()},
-      {id:2,cat:'idiom',content:'首当其冲',meaning:'最先受到攻击或遭遇灾难。\n⚠ 易错：不是"冲在最前面"。',ts:Date.now()},
-      {id:3,cat:'idiom',content:'不刊之论',meaning:'不可磨灭的言论。"刊"是削除，不是"刊登"。',ts:Date.now()},
-      {id:4,cat:'idiom',content:'万人空巷',meaning:'家家户户的人都出来了，形容盛况。\n⚠ 易错：不是"巷子空了"。',ts:Date.now()},
-      {id:5,cat:'idiom',content:'七月流火',meaning:'农历七月大火星西沉，天气转凉。\n⚠ 易错：不是"热得像火"。',ts:Date.now()},
-      {id:6,cat:'quote',content:'治大国若烹小鲜',note:'《道德经》老子。治理大国像煎小鱼，少翻动，顺应自然。',ts:Date.now()},
-      {id:7,cat:'quote',content:'为天地立心，为生民立命，为往圣继绝学，为万世开太平',note:'张载"横渠四句"。宋代儒学最高理想，常作申论引用。',ts:Date.now()},
-    ];
-    save();
-  }
+function migrate(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){try{entries=JSON.parse(raw); return;}catch(e){}}
+  // 兼容旧版
+  const old = localStorage.getItem('gk_review_v2') || localStorage.getItem('gk_review_data');
+  if(old){ try{
+    entries = JSON.parse(old).map(o=>({...o, mastered:o.mastered||false, reviewCount:o.reviewCount||0, lastReview:o.lastReview||null}));
+    save(); localStorage.removeItem('gk_review_v2'); localStorage.removeItem('gk_review_data');
+    return;
+  }catch(e){}}
+  entries = []; save();
 }
 function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); }
 function nextId(){ return entries.length ? Math.max(...entries.map(e=>e.id))+1 : 1; }
 
+function seedData(){
+  if(entries.length) return;
+  entries = [
+    {id:1,cat:'idiom',content:'差强人意',meaning:'大体上还能使人满意。\n⚠ 易错：不是"让人不满意"。',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()},
+    {id:2,cat:'idiom',content:'首当其冲',meaning:'最先受到攻击或遭遇灾难。\n⚠ 易错：不是"冲在最前面"。',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()},
+    {id:3,cat:'idiom',content:'不刊之论',meaning:'不可磨灭的言论。"刊"是削除，不是"刊登"。',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()},
+    {id:4,cat:'idiom',content:'万人空巷',meaning:'家家户户的人都出来了，形容盛况。\n⚠ 易错：不是"巷子空了"。',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()},
+    {id:5,cat:'idiom',content:'七月流火',meaning:'农历七月大火星西沉，天气转凉。\n⚠ 易错：不是"热得像火"。',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()},
+    {id:6,cat:'quote',content:'治大国若烹小鲜',note:'《道德经》老子。治理大国像煎小鱼，少翻动，顺应自然。',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()},
+    {id:7,cat:'quote',content:'为天地立心，为生民立命，为往圣继绝学，为万世开太平',note:'张载"横渠四句"。宋代儒学最高理想，常作申论引用。',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()},
+  ];
+  save();
+}
+
+// ==================== 分类切换 ====================
 function onCategoryChange(){
   const cat = document.getElementById('addCategory').value;
   document.getElementById('fields-idiom').classList.toggle('hidden',cat!=='idiom');
@@ -263,6 +343,7 @@ function onCategoryChange(){
   document.getElementById('quoteText').required = (cat==='quote');
 }
 
+// ==================== UI 切换 ====================
 function switchPage(name){
   currentPage = name;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -270,6 +351,7 @@ function switchPage(name){
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
   document.querySelector(`[data-page="${name}"]`).classList.add('active');
   document.getElementById('fabBtn').style.display = (name==='add'||name==='list')?'none':'flex';
+  document.getElementById('camBtn').style.display = (name==='add')?'flex':'none';
   if(name==='review') doRandom();
   if(name==='list') renderList();
   if(name==='add') resetForm();
@@ -279,6 +361,7 @@ document.querySelectorAll('nav button').forEach(b=>{
   b.addEventListener('click',()=>switchPage(b.dataset.page));
 });
 
+// ==================== 添加 ====================
 function addEntry(e){
   e.preventDefault();
   const cat = document.getElementById('addCategory').value;
@@ -302,7 +385,7 @@ function addEntry(e){
       showToast('已更新');
     }
   } else {
-    entries.push({id:nextId(),cat,content,meaning,note,ts:Date.now()});
+    entries.push({id:nextId(),cat,content,meaning,note,mastered:false,reviewCount:0,lastReview:null,ts:Date.now()});
     showToast('已添加');
   }
   save(); resetForm();
@@ -321,103 +404,224 @@ function resetForm(){
   document.getElementById('submitBtn').textContent='添加';
 }
 
-function showStorage(){
-  const bytes = new Blob([JSON.stringify(entries)]).size;
-  document.getElementById('entryCount').textContent = entries.length + ' 条';
-  if(bytes < 1024) document.getElementById('storageSize').textContent = bytes + ' B';
-  else if(bytes < 1048576) document.getElementById('storageSize').textContent = (bytes/1024).toFixed(1) + ' KB';
-  else document.getElementById('storageSize').textContent = (bytes/1048576).toFixed(2) + ' MB';
+// ==================== 批量导入 ====================
+function batchImport(){
+  const raw = document.getElementById('batchInput').value.trim();
+  const cat = document.getElementById('batchCategory').value;
+  if(!raw) return;
+  const lines = raw.split('\n').filter(l=>l.trim());
+  let added = 0;
+  lines.forEach(line=>{
+    const parts = line.split('|');
+    const content = (parts[0]||'').trim();
+    const extra = (parts[1]||'').trim();
+    if(!content) return;
+    if(cat==='idiom'){
+      entries.push({id:nextId(),cat:'idiom',content,meaning:extra,note:'',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()});
+    } else {
+      entries.push({id:nextId(),cat:'quote',content,note:extra,meaning:'',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()});
+    }
+    added++;
+  });
+  save();
+  document.getElementById('batchInput').value='';
+  document.getElementById('batchResult').textContent = '已导入 '+added+' 条';
+  setTimeout(()=>{document.getElementById('batchResult').textContent='';},3000);
 }
+
+// ==================== 翻转复习 ====================
+let currentCardId = null;
 
 function doRandom(){
   const filter = document.getElementById('reviewFilter').value;
-  let pool = filter==='all' ? entries : entries.filter(e=>e.cat===filter);
+  let pool = entries;
+  if(filter==='idiom') pool = entries.filter(e=>e.cat==='idiom');
+  else if(filter==='quote') pool = entries.filter(e=>e.cat==='quote');
+  else if(filter==='unmastered') pool = entries.filter(e=>!e.mastered);
+
   if(!pool.length){
     document.getElementById('randomDisplay').innerHTML = `
-      <div class="card random-card"><p style="color:#999">暂无数据</p>
+      <div class="card" style="text-align:center;padding:36px"><p style="color:#999">暂无数据</p>
       <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="switchPage('add')">去添加</button></div>`;
     return;
   }
-  const e = pool[Math.floor(Math.random()*pool.length)];
-  let body = e.cat==='idiom'
-    ? `<div class="content">${e.content}</div><hr class="divider"><div class="meaning" style="white-space:pre-line">${e.meaning||''}</div>`
-    : `<div class="content">${e.content}</div>${e.note?`<hr class="divider"><div class="note" style="white-space:pre-line">${e.note}</div>`:''}`;
+
+  // 加权排序：未掌握优先，复习次数少的优先
+  pool.sort((a,b)=>{
+    if(a.mastered!==b.mastered) return a.mastered ? 1 : -1;
+    return a.reviewCount - b.reviewCount;
+  });
+  // 前50%加权随机
+  const top = pool.slice(0, Math.max(Math.floor(pool.length*0.5), 1));
+  const e = top[Math.floor(Math.random()*top.length)];
+  currentCardId = e.id;
+
+  const showMeaning = e.cat==='idiom'?e.meaning:e.note;
   document.getElementById('randomDisplay').innerHTML = `
-    <div class="card random-card">
-      <span class="tag tag-idiom">${e.cat==='idiom'?'成语':'名句'}</span>
-      ${body}
-      <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;">
-        <button class="btn btn-primary btn-sm" onclick="doRandom()">再来一条</button>
-        <button class="btn btn-outline btn-sm" onclick="deleteEntry(${e.id})">删除</button>
-      </div></div>`;
+    <div class="flip-container" onclick="flipCard()">
+      <div class="flip-card" id="flipCard">
+        <div class="flip-face flip-front">
+          <span class="tag tag-idiom">${e.cat==='idiom'?'成语':'名句'}</span>
+          <div class="content">${e.content}</div>
+          <div class="hint">👆 点击翻转看答案</div>
+        </div>
+        <div class="flip-face flip-back">
+          <span class="tag tag-idiom">${e.cat==='idiom'?'释义':'出处'}</span>
+          <div class="content">${showMeaning||'(无)'}</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;">
+      <button class="btn btn-green btn-sm" onclick="markMastered(${e.id},true)">记住了</button>
+      <button class="btn btn-orange btn-sm" onclick="markMastered(${e.id},false)">没记住</button>
+      <button class="btn btn-outline btn-sm" onclick="doRandom()">跳过</button>
+    </div>
+    <div style="text-align:center;margin-top:6px">
+      <span class="tag ${e.mastered?'tag-mastered':'tag-unmastered'}">${e.mastered?'已掌握':'未掌握'}</span>
+      <span style="font-size:.7rem;color:#bbb;margin-left:6px">复习 ${e.reviewCount} 次</span>
+    </div>`;
 }
 
+function flipCard(){
+  document.getElementById('flipCard').classList.toggle('flipped');
+}
+
+function markMastered(id, mastered){
+  const e = entries.find(x=>x.id===id);
+  if(e){
+    e.mastered = mastered;
+    e.reviewCount = (e.reviewCount||0)+1;
+    e.lastReview = Date.now();
+    save();
+  }
+  doRandom();
+}
+
+// ==================== 列表 ====================
 var currentPage = 'review';
 
 function renderList(){
   const q = (document.getElementById('searchInput').value||'').toLowerCase();
   const filter = document.getElementById('listFilter').value;
   let list = entries;
-  if(filter!=='all') list = list.filter(e=>e.cat===filter);
+  if(filter==='idiom') list = list.filter(e=>e.cat==='idiom');
+  else if(filter==='quote') list = list.filter(e=>e.cat==='quote');
+  else if(filter==='mastered') list = list.filter(e=>e.mastered);
+  else if(filter==='unmastered') list = list.filter(e=>!e.mastered);
   if(q) list = list.filter(e=>e.content.includes(q)||(e.meaning||'').includes(q)||(e.note||'').includes(q));
   list.sort((a,b)=>b.ts-a.ts);
+
+  const mastered = entries.filter(e=>e.mastered).length;
   document.getElementById('statsBar').innerHTML = `
     <div class="stat"><div class="num">${entries.length}</div><div class="label">总计</div></div>
     <div class="stat"><div class="num">${entries.filter(e=>e.cat==='idiom').length}</div><div class="label">成语</div></div>
-    <div class="stat"><div class="num">${entries.filter(e=>e.cat==='quote').length}</div><div class="label">名句</div></div>`;
+    <div class="stat"><div class="num">${entries.filter(e=>e.cat==='quote').length}</div><div class="label">名句</div></div>
+    <div class="stat"><div class="num">${mastered}</div><div class="label">已掌握</div></div>`;
+
   if(!list.length){
-    document.getElementById('listDisplay').innerHTML = '<div class="empty"><div class="icon">-</div><p>暂无数据</p></div>';
+    document.getElementById('listDisplay').innerHTML = '<div class="empty"><p>暂无数据</p></div>';
     return;
   }
+
   document.getElementById('listDisplay').innerHTML = list.map(e=>{
     let body = e.cat==='idiom'
       ? `<div class="content">${e.content}</div>${e.meaning?`<div class="note" style="white-space:pre-line">${e.meaning}</div>`:''}`
       : `<div class="content">${e.content}</div>${e.note?`<div class="note" style="white-space:pre-line">${e.note}</div>`:''}`;
     return `<div class="card">
-      <span class="tag tag-idiom">${e.cat==='idiom'?'成语':'名句'}</span>${body}
+      <span class="tag tag-idiom">${e.cat==='idiom'?'成语':'名句'}</span>
+      <span class="tag ${e.mastered?'tag-mastered':'tag-unmastered'}">${e.mastered?'已掌握':'未掌握'}</span>
+      ${body}
       <div style="margin-top:8px;display:flex;gap:8px">
         <button class="btn btn-outline btn-sm" onclick="editEntry(${e.id})">编辑</button>
+        <button class="btn btn-outline btn-sm" onclick="toggleMastered(${e.id})">${e.mastered?'标为未掌握':'标为已掌握'}</button>
         <button class="btn btn-outline btn-sm" style="border-color:#e2e8f0;color:#999" onclick="deleteEntry(${e.id})">删除</button>
       </div></div>`;
   }).join('');
 }
 
-function editEntry(id){
+function toggleMastered(id){
   const e = entries.find(x=>x.id===id);
-  if(!e) return;
-  editId=id; switchPage('add');
-  document.getElementById('addCategory').value=e.cat;
-  if(e.cat==='idiom'){
-    document.getElementById('idiomWord').value=e.content||'';
-    document.getElementById('idiomMeaning').value=e.meaning||'';
-  } else {
-    document.getElementById('quoteText').value=e.content||'';
-    document.getElementById('quoteNote').value=e.note||'';
+  if(e){ e.mastered = !e.mastered; save(); renderList(); }
+}
+
+function editEntry(id){ /* 同上 */ const e=entries.find(x=>x.id===id);if(!e)return;editId=id;switchPage('add');document.getElementById('addCategory').value=e.cat;if(e.cat==='idiom'){document.getElementById('idiomWord').value=e.content||'';document.getElementById('idiomMeaning').value=e.meaning||'';}else{document.getElementById('quoteText').value=e.content||'';document.getElementById('quoteNote').value=e.note||'';}onCategoryChange();document.getElementById('submitBtn').textContent='保存';showToast('修改后点击保存');}
+
+function deleteEntry(id){ const e=entries.find(x=>x.id===id);if(!e)return;const label=e.cat==='idiom'?`成语「${e.content}」`:`名句「${e.content.slice(0,20)}...」`;showModal('确认删除',`删除 ${label}？`,()=>{entries=entries.filter(x=>x.id!==id);save();if(currentPage==='review')doRandom();if(currentPage==='list')renderList();});}
+
+// ==================== OCR 相机识别 ====================
+function openOCR(){
+  document.getElementById('ocrModal').classList.add('show');
+  document.getElementById('ocrResult').innerHTML='';
+  document.getElementById('ocrStatus').innerHTML='';
+  document.getElementById('ocrMsg').textContent='';
+  document.getElementById('ocrInput').value='';
+}
+function closeOCR(){
+  document.getElementById('ocrModal').classList.remove('show');
+}
+
+async function runOCR(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  document.getElementById('ocrStatus').innerHTML = '<div class="spinner"></div> <span style="color:#888">识别中...</span>';
+  document.getElementById('ocrResult').innerHTML='';
+
+  try{
+    const worker = await Tesseract.recognize(file, 'chi_sim+eng', {
+      logger: m => {
+        if(m.status==='recognizing text'){
+          document.getElementById('ocrStatus').innerHTML = `<span style="color:#888">识别中... ${Math.round(m.progress*100)}%</span>`;
+        }
+      }
+    });
+    const text = worker.data.text.trim();
+    if(!text){ document.getElementById('ocrStatus').innerHTML='<span style="color:#999">未识别到文字</span>'; return; }
+
+    const lines = text.split('\n').filter(l=>l.trim());
+    document.getElementById('ocrStatus').innerHTML = '<span style="color:#16a34a">识别到 '+lines.length+' 行，勾选要添加的：</span>';
+    document.getElementById('ocrResult').innerHTML = lines.map((l,i)=>
+      `<label><input type="checkbox" value="${i}" ${l.length>2?'checked':''}> ${escHtml(l)}</label>`
+    ).join('');
+  }catch(err){
+    document.getElementById('ocrStatus').innerHTML = '<span style="color:#c00">识别失败，请重试</span>';
+    console.error(err);
   }
-  onCategoryChange();
-  document.getElementById('submitBtn').textContent='保存';
-  showToast('修改后点击保存');
 }
 
-function deleteEntry(id){
-  const e = entries.find(x=>x.id===id);
-  if(!e) return;
-  const label = e.cat==='idiom'?`成语「${e.content}」`:`名句「${e.content.slice(0,20)}...」`;
-  showModal('确认删除',`删除 ${label}？`,()=>{
-    entries = entries.filter(x=>x.id!==id);
-    save();
-    if(currentPage==='review') doRandom();
-    if(currentPage==='list') renderList();
+function addOCRSelection(){
+  const checks = document.querySelectorAll('#ocrResult input:checked');
+  const cat = document.getElementById('ocrCategory').value;
+  let added = 0;
+  checks.forEach(cb=>{
+    const text = cb.parentElement.textContent.trim();
+    if(!text) return;
+    if(cat==='idiom'){
+      // 尝试拆分：第一行=成语，后面=释义
+      const idx = text.indexOf('：')!==-1 ? text.indexOf('：') : text.indexOf(':');
+      if(idx!==-1){
+        entries.push({id:nextId(),cat:'idiom',content:text.slice(0,idx).trim(),meaning:text.slice(idx+1).trim(),note:'',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()});
+      } else {
+        entries.push({id:nextId(),cat:'idiom',content:text,meaning:'',note:'',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()});
+      }
+    } else {
+      entries.push({id:nextId(),cat:'quote',content:text,note:'',meaning:'',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()});
+    }
+    added++;
   });
+  save();
+  document.getElementById('ocrMsg').textContent = '已添加 '+added+' 条';
+  setTimeout(()=>{document.getElementById('ocrMsg').textContent='';},3000);
 }
 
+function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ==================== 导出导入清空 ====================
 function exportData(){
   const blob = new Blob([JSON.stringify(entries,null,2)],{type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'gk-review-backup-'+new Date().toISOString().slice(0,10)+'.json';
-  a.click();
-  showToast('已导出');
+  a.download = '复习备份_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); showToast('已导出');
 }
 function importData(event){
   const file = event.target.files[0];
@@ -425,29 +629,31 @@ function importData(event){
   showModal('导入备份','导入将覆盖当前所有数据，确认？',()=>{
     const reader = new FileReader();
     reader.onload = function(){
-      try{
-        const data = JSON.parse(reader.result);
-        if(!Array.isArray(data)) throw new Error();
-        entries = data; save();
-        if(currentPage==='review') doRandom();
-        if(currentPage==='list') renderList();
+      try{ const data = JSON.parse(reader.result); if(!Array.isArray(data)) throw new Error();
+        entries = data; save(); if(currentPage==='review') doRandom(); if(currentPage==='list') renderList();
         showToast('导入成功，共 '+data.length+' 条');
       }catch(e){ showToast('文件格式不对'); }
-    };
-    reader.readAsText(file);
+    }; reader.readAsText(file);
   });
   event.target.value='';
 }
-
 function confirmClear(){
   showModal('清空数据','数据永久删除，不可恢复。确定？',()=>{
-    entries=[];save();
-    if(currentPage==='review') doRandom();
-    if(currentPage==='list') renderList();
-    showToast('已清空');
+    entries=[];save(); if(currentPage==='review') doRandom(); if(currentPage==='list') renderList(); showToast('已清空');
   });
 }
 
+// ==================== 设置页存储 ====================
+function showStorage(){
+  const bytes = new Blob([JSON.stringify(entries)]).size;
+  document.getElementById('entryCount').textContent = entries.length + ' 条';
+  document.getElementById('masteredCount').textContent = entries.filter(e=>e.mastered).length + ' 条';
+  if(bytes < 1024) document.getElementById('storageSize').textContent = bytes + ' B';
+  else if(bytes < 1048576) document.getElementById('storageSize').textContent = (bytes/1024).toFixed(1) + ' KB';
+  else document.getElementById('storageSize').textContent = (bytes/1048576).toFixed(2) + ' MB';
+}
+
+// ==================== 弹窗 ====================
 let modalCallback=null;
 function showModal(title,msg,onConfirm){
   document.getElementById('modalTitle').textContent=title;
@@ -455,30 +661,17 @@ function showModal(title,msg,onConfirm){
   document.getElementById('modal').classList.add('show');
   modalCallback=onConfirm;
 }
-document.getElementById('modalConfirm').addEventListener('click',()=>{
-  document.getElementById('modal').classList.remove('show');
-  if(modalCallback) modalCallback();
-  modalCallback=null;
-});
-document.getElementById('modalCancel').addEventListener('click',()=>{
-  document.getElementById('modal').classList.remove('show');
-  modalCallback=null;
-});
+document.getElementById('modalConfirm').addEventListener('click',()=>{document.getElementById('modal').classList.remove('show');if(modalCallback)modalCallback();modalCallback=null;});
+document.getElementById('modalCancel').addEventListener('click',()=>{document.getElementById('modal').classList.remove('show');modalCallback=null;});
 
 function showToast(msg){
-  let t = document.getElementById('toast');
-  if(!t){
-    t = document.createElement('div');
-    t.id='toast';
-    t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 24px;border-radius:8px;font-size:.85rem;z-index:200;transition:.3s;opacity:0;pointer-events:none';
-    document.body.appendChild(t);
-  }
-  t.textContent=msg;t.style.opacity='1';
-  clearTimeout(t._tid);
-  t._tid=setTimeout(()=>{t.style.opacity='0';},1800);
+  let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 24px;border-radius:8px;font-size:.85rem;z-index:200;transition:.3s;opacity:0;pointer-events:none';document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';clearTimeout(t._tid);t._tid=setTimeout(()=>{t.style.opacity='0';},1800);
 }
 
-load();onCategoryChange();doRandom();
+// ==================== 初始化 ====================
+migrate(); seedData(); onCategoryChange(); doRandom();
 </script>
 </body>
 </html>
