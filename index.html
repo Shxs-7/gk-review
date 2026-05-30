@@ -558,18 +558,240 @@ function toggleMastered(id){
 function editEntry(id){ /* 同上 */ const e=entries.find(x=>x.id===id);if(!e)return;editId=id;switchPage('add');document.getElementById('addCategory').value=e.cat;if(e.cat==='idiom'){document.getElementById('idiomWord').value=e.content||'';document.getElementById('idiomMeaning').value=e.meaning||'';}else{document.getElementById('quoteText').value=e.content||'';document.getElementById('quoteNote').value=e.note||'';}onCategoryChange();document.getElementById('submitBtn').textContent='保存';showToast('修改后点击保存');}
 
 // ==================== 查询 ====================
+// 内嵌公考高频成语词典（释义 + 易错点 + 真题搭配）
+const DICT = {
+'差强人意':'【释义】大体上还能使人满意。
+【公考易错】不是"让人不满意"，恰恰相反。
+【真题搭配】差强人意的成绩/表现',
+'首当其冲':'【释义】最先受到攻击或遭遇灾难。
+【公考易错】不是"冲在最前面"。
+【真题搭配】首当其冲受到影响',
+'不刊之论':'【释义】不可磨灭的言论。"刊"是削除。
+【公考易错】不是"不能刊登的言论"。
+【真题搭配】堪称不刊之论',
+'万人空巷':'【释义】家家户户的人都出来了，形容盛况。
+【公考易错】不是"巷子里没人"。
+【真题搭配】万人空巷的盛况',
+'七月流火':'【释义】农历七月大火星西沉，天气转凉。
+【公考易错】不是"热得像火"。
+【真题搭配】七月流火，天气渐凉',
+'不以为然':'【释义】不认为是对的，表示不同意。
+【公考辨析】≠"不以为意"（不放心上）。
+【真题搭配】对此不以为然',
+'不以为意':'【释义】不放在心上，表示不在乎。
+【公考辨析】≠"不以为然"（不同意）。
+【真题搭配】不以为意的神情',
+'炙手可热':'【释义】手靠近就感到热，比喻气焰盛权势大。
+【公考易错】含贬义，不是"受欢迎"。
+【真题搭配】炙手可热的人物',
+'美轮美奂':'【释义】形容房屋建筑高大华丽。
+【公考易错】只用于建筑物。
+【真题搭配】美轮美奂的宫殿',
+'目无全牛':'【释义】眼里没有完整的牛，形容技艺精湛。
+【公考易错】庖丁解牛，非"看不到整体"。
+【真题搭配】目无全牛的技艺',
+'望其项背':'【释义】望见别人脖子和后背，表示赶得上。
+【公考易错】常与"难以"连用表否定。
+【真题搭配】难以望其项背',
+'文不加点':'【释义】文章一气呵成，无须修改。"点"是涂改。
+【公考易错】不是"不加标点符号"。
+【真题搭配】文不加点一气呵成',
+'弹冠相庆':'【释义】掸去帽子灰尘准备做官，小人得志。
+【公考易错】含贬义，不是泛指庆祝。
+【真题搭配】弹冠相庆之徒',
+'曾几何时':'【释义】时间过去没有多久。
+【公考易错】不是"曾经"的意思。
+【真题搭配】曾几何时一片荒芜',
+'久假不归':'【释义】长期借用而不归还。"假"是借。
+【公考易错】不是"长期请假不回来"。
+【真题搭配】久假不归的图书',
+'不足为训':'【释义】不值得作为效法的准则。"训"是准则。
+【公考易错】不是"不值得作为教训"。
+【真题搭配】此事不足为训',
+'身无长物':'【释义】身上没有多余的东西，形容贫穷简朴。
+【公考易错】不是"身上没有特长"。
+【真题搭配】身无长物两袖清风',
+'蹉跎岁月':'【释义】虚度光阴把时光白白耽误。
+【公考易错】不能用作"艰苦岁月"。
+【真题搭配】蹉跎岁月一事无成',
+'大快人心':'【释义】坏人坏事受惩罚使人痛快。
+【公考易错】只用于坏人受惩罚时。
+【真题搭配】大快人心的判决',
+'目光如豆':'【释义】眼光像豆子一样小，目光短浅。
+【公考易错】含贬义不能形容专注。
+【真题搭配】目光如豆之辈',
+'侃侃而谈':'【释义】理直气壮从容不迫地说话。
+【公考易错】不能用于闲聊或说大话。
+【真题搭配】在台上侃侃而谈',
+'期期艾艾':'【释义】形容口吃，说话不流利。
+【公考易错】不能理解为"期望"。
+【真题搭配】期期艾艾说不出话',
+'汗牛充栋':'【释义】书运输让牛出汗堆到房梁形容藏书多。
+【公考易错】只用于书籍多。
+【真题搭配】汗牛充栋的典籍',
+'浩如烟海':'【释义】形容文献资料非常丰富。
+【公考易错】多用于文献书籍。
+【真题搭配】浩如烟海的史料',
+'豆蔻年华':'【释义】指少女十三四岁的年纪。
+【公考易错】只用于十三四岁的少女。
+【真题搭配】正值豆蔻年华',
+'春秋鼎盛':'【释义】人到壮年精力旺盛。
+【公考易错】不能形容国家或时代。
+【真题搭配】春秋鼎盛之年',
+'江河日下':'【释义】比喻情况一天天坏下去。
+【公考易错】不能形容水量或自然现象。
+【真题搭配】江河日下的局势',
+'如履薄冰':'【释义】像走在薄冰上极为谨慎。
+【公考易错】强调"谨慎"而非"危险"。
+【真题搭配】如履薄冰般谨慎',
+'如坐春风':'【释义】与品德高尚的人相处受到教化。
+【公考易错】不能理解为"舒服惬意"。
+【真题搭配】如坐春风获益良多',
+'春风化雨':'【释义】比喻良好的教育或感化。
+【公考易错】用于教育感化非形容风景。
+【真题搭配】春风化雨般的教诲',
+'洛阳纸贵':'【释义】比喻作品风行一时广为流传。
+【公考易错】不能理解为"纸价上涨"。
+【真题搭配】此书一出洛阳纸贵',
+'一挥而就':'【释义】一动笔就写成形容才思敏捷。
+【公考辨析】≠"一蹴而就"（轻而易举成功）。
+【真题搭配】一挥而就的佳作',
+'一蹴而就':'【释义】踏一步就成功形容事情轻而易举。
+【公考辨析】≠"一挥而就"（形容写作快）。
+【真题搭配】改革不能一蹴而就',
+'鱼目混珠':'【释义】拿鱼眼睛冒充珍珠以假乱真。
+【公考辨析】≠"鱼龙混杂"（好人坏人混杂）。
+【真题搭配】鱼目混珠的假货',
+'鱼龙混杂':'【释义】坏人和好人混在一起。
+【公考辨析】≠"鱼目混珠"（以假充真）。
+【真题搭配】鱼龙混杂的江湖',
+'无可厚非':'【释义】不可过分指责有缺点但可谅解。
+【公考辨析】≠"无可非议"（完全没问题）。
+【真题搭配】这也无可厚非',
+'无可非议':'【释义】没有什么可指责的做得妥当。
+【公考辨析】≠"无可厚非"（有缺点但可谅解）。
+【真题搭配】他的做法无可非议',
+'不翼而飞':'【释义】没有翅膀却飞走，东西丢失或消息传播。
+【公考辨析】≠"不胫而走"（专指消息传播）。
+【真题搭配】钱包不翼而飞',
+'不胫而走':'【释义】没有腿却能跑形容消息迅速传播。
+【公考辨析】≠"不翼而飞"（东西丢失）。
+【真题搭配】消息不胫而走',
+'耸人听闻':'【释义】故意夸大事实使人震惊。
+【公考辨析】≠"骇人听闻"（事实本身令人震惊）。
+【真题搭配】耸人听闻的标题',
+'骇人听闻':'【释义】事实本身让人震惊。
+【公考辨析】≠"耸人听闻"（故意夸大捏造）。
+【真题搭配】骇人听闻的惨案',
+'耳濡目染':'【释义】耳朵常听眼睛常见不知不觉受影响。
+【公考用法】环境对人的长期影响。
+【真题搭配】耳濡目染受益匪浅',
+'潜移默化':'【释义】思想性格在不知不觉中发生变化。
+【公考用法】与"耳濡目染"近义。
+【真题搭配】潜移默化的影响',
+'提纲挈领':'【释义】提起网绳抓住衣领比喻抓住要领。
+【公考用法】总结归纳申论常用。
+【真题搭配】提纲挈领地概括',
+'鞭辟入里':'【释义】鞭子打到最里层形容分析透彻深刻。
+【公考用法】评论分析申论常用。
+【真题搭配】鞭辟入里的分析',
+'真知灼见':'【释义】正确而深刻的认识和高明见解。
+【公考用法】肯定他人观点。
+【真题搭配】提出了真知灼见',
+'独树一帜':'【释义】单独竖起一面旗帜自成一家。
+【公考用法】风格独特。
+【真题搭配】独树一帜的风格',
+'匠心独运':'【释义】独具创新地运用精巧心思。
+【公考用法】艺术设计领域。
+【真题搭配】匠心独运的设计',
+'亦步亦趋':'【释义】别人慢走就慢走快走就快走没有主见。
+【公考用法】含贬义形容模仿。
+【真题搭配】亦步亦趋地跟随',
+'另辟蹊径':'【释义】另外开辟一条路比喻创新方法。
+【公考用法】创新话题。
+【真题搭配】另辟蹊径的做法',
+'登堂入室':'【释义】登上厅堂进入内室学问由浅入深。
+【公考易错】不是字面"进入室内"。
+【真题搭配】登堂入室造诣深湛',
+'格物致知':'【释义】探究事物原理获取知识。大学八条目。
+【公考用法】调查研究求真务实。',
+'知行合一':'【释义】认识和行动要统一。王阳明心学校心命题。
+【公考用法】理论与实践相结合。',
+'循序渐进':'【释义】按步骤逐渐深入提高。
+【公考用法】学习方法或改革策略。',
+'因地制宜':'【释义】根据各地情况制定适宜办法。
+【公考用法】政策制定乡村振兴。',
+'因材施教':'【释义】针对不同的人采用不同教育方式。
+【公考用法】教育类话题。',
+'与时俱进':'【释义】随着时代发展不断前进。
+【公考用法】时代背景类论述。',
+'防微杜渐':'【释义】在坏事刚露头时加以防止。
+【公考用法】风险防控预防话题。',
+'未雨绸缪':'【释义】天没下雨先修好房屋事先准备。
+【公考用法】与"防微杜渐"近义。',
+'居安思危':'【释义】处在安定中想到可能的危难。
+【公考用法】安全风险治理话题。',
+'厚积薄发':'【释义】充分积累后才慢慢释放。
+【公考用法】积累与爆发关系。',
+'推陈出新':'【释义】去掉旧事糟粕取其精华向新发展。
+【公考用法】文化传承创新。',
+'继往开来':'【释义】继承前人事业开辟未来道路。
+【公考用法】总结展望类结尾。',
+'治大国若烹小鲜':'【出处】《道德经》老子。
+【释义】治理大国像煎小鱼少翻动不折腾。
+【公考用法】简政放权不扰民。',
+'为天地立心':'【出处】张载"横渠四句"。
+【释义】为天地确立核心价值。
+【公考用法】知识分子使命感。',
+'大道之行天下为公':'【出处】《礼记·礼运》。
+【释义】大道推行时天下为共有。
+【公考用法】公平正义社会治理。',
+'民为邦本本固邦宁':'【出处】《尚书·五子之歌》。
+【释义】人民是国家的根本。
+【公考用法】以人民为中心。',
+'己所不欲勿施于人':'【出处】《论语·卫灵公》。
+【释义】自己不愿意的不强加别人。
+【公考用法】换位思考群众路线。',
+'苟日新日日新':'【出处】《大学》。
+【释义】一天更新就要保持天天更新。
+【公考用法】创新持续改进。',
+'行百里者半九十':'【出处】《战国策》。
+【释义】走百里走了九十只算一半。
+【公考用法】坚持到底不松懈。',
+'纸上得来终觉浅':'【出处】陆游《冬夜读书示子聿》。
+【释义】书本得来终觉浅薄要亲身实践。
+【公考用法】理论与实践关系。',
+'学而不思则罔':'【出处】《论语》。
+【释义】学而不思迷惑思而不学危险。
+【公考用法】学思关系。',
+};
+
+let searchTimer = null;
 function doSearch(){
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(_doSearch, 300);
+}
+function _doSearch(){
   const q = (document.getElementById('searchQuery').value||'').trim();
   if(!q){ document.getElementById('searchResult').innerHTML=''; return; }
 
-  // 搜本地
+  let html = '';
+
+  // 1. 查内嵌词典
+  const dictKey = Object.keys(DICT).find(k=>k.includes(q)||q.includes(k));
+  if(dictKey){
+    html += `<div class="card">
+      <span class="tag tag-idiom">📖 ${dictKey}</span>
+      <div class="note" style="white-space:pre-line;line-height:1.9">${DICT[dictKey]}</div>
+    </div>`;
+  }
+
+  // 2. 查本地数据
   const matched = entries.filter(e=>
     e.content.includes(q) || (e.meaning||'').includes(q) || (e.note||'').includes(q)
   );
-
-  let html = '';
   if(matched.length){
-    html += '<div style="font-size:.8rem;color:#888;margin-bottom:10px">本地匹配 '+matched.length+' 条</div>';
+    html += '<div style="font-size:.8rem;color:#888;margin-bottom:8px">本地笔记 '+matched.length+' 条</div>';
     html += matched.map(e=>`
       <div class="card">
         <span class="tag tag-idiom">${e.cat==='idiom'?'成语':'名句'}</span>
@@ -577,36 +799,21 @@ function doSearch(){
         ${e.meaning?`<div class="note" style="white-space:pre-line">${e.meaning}</div>`:''}
         ${e.note?`<div class="note" style="white-space:pre-line">${e.note}</div>`:''}
       </div>`).join('');
-  } else {
-    html += '<div class="card" style="text-align:center;padding:28px"><p style="color:#999">本地未找到</p></div>';
   }
 
-  // 外部查询链接
-  const enc = encodeURIComponent(q);
-  html += `
-    <div style="font-size:.8rem;color:#888;margin:14px 0 8px">在线查询</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <a href="https://baike.baidu.com/item/${enc}" target="_blank" style="text-decoration:none">
-        <div class="card" style="text-align:center;padding:14px;font-size:.85rem;color:#2563eb">
-          📘 百度百科<br><span style="font-size:.7rem;color:#999">释义·出处·典故</span>
+  // 3. 如果都没有，提供在线查链接
+  if(!html){
+    const enc = encodeURIComponent(q);
+    html = `
+      <div class="card" style="text-align:center;padding:28px">
+        <p style="color:#999;margin-bottom:16px">词典和本地均未收录</p>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+          <a href="https://baike.baidu.com/item/${enc}" target="_blank" class="btn btn-outline btn-sm">百度百科</a>
+          <a href="https://hanyu.baidu.com/s?wd=${enc}" target="_blank" class="btn btn-outline btn-sm">百度汉语</a>
+          <a href="https://www.zdic.net/hans/${enc}" target="_blank" class="btn btn-outline btn-sm">汉典</a>
         </div>
-      </a>
-      <a href="https://hanyu.baidu.com/s?wd=${enc}" target="_blank" style="text-decoration:none">
-        <div class="card" style="text-align:center;padding:14px;font-size:.85rem;color:#2563eb">
-          📖 百度汉语<br><span style="font-size:.7rem;color:#999">详细解释·例句</span>
-        </div>
-      </a>
-      <a href="https://www.zdic.net/hans/${enc}" target="_blank" style="text-decoration:none">
-        <div class="card" style="text-align:center;padding:14px;font-size:.85rem;color:#2563eb">
-          📚 汉典<br><span style="font-size:.7rem;color:#999">权威词典</span>
-        </div>
-      </a>
-      <a href="https://m.baidu.com/s?word=${enc}+公考" target="_blank" style="text-decoration:none">
-        <div class="card" style="text-align:center;padding:14px;font-size:.85rem;color:#2563eb">
-          🎯 搜公考真题<br><span style="font-size:.7rem;color:#999">真题·搭配·考点</span>
-        </div>
-      </a>
-    </div>`;
+      </div>`;
+  }
 
   document.getElementById('searchResult').innerHTML = html;
 }
