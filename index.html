@@ -97,9 +97,6 @@ label{display:block;font-size:.8rem;font-weight:500;color:#666;margin:12px 0 5px
 }
 .fab:active{transform:scale(.9)}
 
-.fab-cam{
-  bottom:88px; background:#16a34a;
-}
 
 .empty{text-align:center;padding:40px 20px;color:#bbb}
 .empty .icon{font-size:2.5rem;margin-bottom:10px}
@@ -187,9 +184,6 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
       <button class="btn btn-primary btn-sm" onclick="doRandom()">随机</button>
     </div>
     <div id="randomDisplay"></div>
-    <div style="text-align:center;margin-top:20px">
-      <a href="http://www.people.com.cn" target="_blank" class="btn btn-outline btn-sm">📰 人民网</a>
-    </div>
   </section>
 
   <!-- 添加页 -->
@@ -322,29 +316,10 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
     </div>
   </section>
 
-  <!-- OCR 弹窗 -->
-  <div class="modal-overlay" id="ocrModal">
-    <div class="modal" style="max-width:90vw">
-      <h3>相机识别</h3>
-      <input type="file" accept="image/*" capture="environment" id="ocrInput" onchange="runOCR(event)" style="font-size:.85rem;margin-bottom:12px">
-      <div id="ocrStatus"></div>
-      <div class="ocr-result" id="ocrResult"></div>
-      <div style="margin-top:12px;display:flex;gap:8px">
-        <select id="ocrCategory" style="width:auto">
-          <option value="idiom">添加为成语</option>
-          <option value="quote">添加为名句</option>
-        </select>
-        <button class="btn btn-primary btn-sm" id="ocrAddBtn" onclick="addOCRSelection()">添加选中</button>
-      </div>
-      <p id="ocrMsg" style="font-size:.75rem;color:#16a34a;margin-top:6px"></p>
-      <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="closeOCR()">关闭</button>
-    </div>
-  </div>
 </main>
 
 <!-- 浮动按钮 -->
 <button class="fab" onclick="switchPage('add')" id="fabBtn">+</button>
-<button class="fab fab-cam" onclick="openOCR()" id="camBtn">📷</button>
 
 <!-- 确认弹窗 -->
 <div class="modal-overlay" id="modal">
@@ -948,71 +923,6 @@ function saveAIResult(btn){
 }
 
 function deleteEntry(id){ const e=entries.find(x=>x.id===id);if(!e)return;const label=e.cat==='idiom'?`成语「${e.content}」`:`名句「${e.content.slice(0,20)}...」`;showModal('确认删除',`删除 ${label}？`,()=>{entries=entries.filter(x=>x.id!==id);save();if(currentPage==='review')doRandom();if(currentPage==='list')renderList();});}
-
-// ==================== OCR 相机识别 ====================
-function openOCR(){
-  document.getElementById('ocrModal').classList.add('show');
-  document.getElementById('ocrResult').innerHTML='';
-  document.getElementById('ocrStatus').innerHTML='';
-  document.getElementById('ocrMsg').textContent='';
-  document.getElementById('ocrInput').value='';
-}
-function closeOCR(){
-  document.getElementById('ocrModal').classList.remove('show');
-}
-
-async function runOCR(event){
-  const file = event.target.files[0];
-  if(!file) return;
-  document.getElementById('ocrStatus').innerHTML = '<div class="spinner"></div> <span style="color:#888">识别中...</span>';
-  document.getElementById('ocrResult').innerHTML='';
-
-  try{
-    const worker = await Tesseract.recognize(file, 'chi_sim+eng', {
-      logger: m => {
-        if(m.status==='recognizing text'){
-          document.getElementById('ocrStatus').innerHTML = `<span style="color:#888">识别中... ${Math.round(m.progress*100)}%</span>`;
-        }
-      }
-    });
-    const text = worker.data.text.trim();
-    if(!text){ document.getElementById('ocrStatus').innerHTML='<span style="color:#999">未识别到文字</span>'; return; }
-
-    const lines = text.split('\n').filter(l=>l.trim());
-    document.getElementById('ocrStatus').innerHTML = '<span style="color:#16a34a">识别到 '+lines.length+' 行，勾选要添加的：</span>';
-    document.getElementById('ocrResult').innerHTML = lines.map((l,i)=>
-      `<label><input type="checkbox" value="${i}" ${l.length>2?'checked':''}> ${escHtml(l)}</label>`
-    ).join('');
-  }catch(err){
-    document.getElementById('ocrStatus').innerHTML = '<span style="color:#c00">识别失败，请重试</span>';
-    console.error(err);
-  }
-}
-
-function addOCRSelection(){
-  const checks = document.querySelectorAll('#ocrResult input:checked');
-  const cat = document.getElementById('ocrCategory').value;
-  let added = 0;
-  checks.forEach(cb=>{
-    const text = cb.parentElement.textContent.trim();
-    if(!text) return;
-    if(cat==='idiom'){
-      // 尝试拆分：第一行=成语，后面=释义
-      const idx = text.indexOf('：')!==-1 ? text.indexOf('：') : text.indexOf(':');
-      if(idx!==-1){
-        entries.push({id:nextId(),cat:'idiom',content:text.slice(0,idx).trim(),meaning:text.slice(idx+1).trim(),note:'',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()});
-      } else {
-        entries.push({id:nextId(),cat:'idiom',content:text,meaning:'',note:'',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()});
-      }
-    } else {
-      entries.push({id:nextId(),cat:'quote',content:text,note:'',meaning:'',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()});
-    }
-    added++;
-  });
-  save();
-  document.getElementById('ocrMsg').textContent = '已添加 '+added+' 条';
-  setTimeout(()=>{document.getElementById('ocrMsg').textContent='';},3000);
-}
 
 function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
