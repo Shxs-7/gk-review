@@ -252,8 +252,10 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
       <div class="chat-msgs" id="chatMsgs">
         <div class="chat-empty"><div class="icon">💬</div><p>AI 学习助手</p><p style="font-size:.8rem">提问公考相关问题</p></div>
       </div>
+      <input type="file" accept="image/*" capture="environment" id="chatImgInput" onchange="handleChatImage(event)" style="display:none">
       <div class="chat-input-row" style="padding:8px 16px">
-        <input type="text" id="chatInput" placeholder="输入你的问题..." onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('chatImgInput').click()" style="font-size:1.2rem">📷</button>
+        <input type="text" id="chatInput" placeholder="输入问题或拍照识别题目..." onkeydown="if(event.key==='Enter')sendChat()">
         <button class="btn btn-primary btn-sm" onclick="sendChat()">发送</button>
       </div>
     </div>
@@ -1071,6 +1073,57 @@ function showToast(msg){
 
 // ==================== 聊天 ====================
 let chatHistory = [];
+
+async function handleChatImage(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  if(!apiKey){ showToast('请先在设置页保存 API Key'); return; }
+
+  // 显示用户发了图片
+  chatHistory.push({role:'user',content:'[上传了一张题目图片]'});
+  renderChat();
+  document.getElementById('chatMsgs').innerHTML += '<div class="chat-msg ai"><div class="chat-bubble"><div class="spinner"></div> 识别中...</div></div>';
+  scrollChat();
+
+  try{
+    // OCR 识别
+    const worker = await Tesseract.recognize(file, 'chi_sim+eng');
+    const ocrText = worker.data.text.trim();
+    if(!ocrText){
+      chatHistory.push({role:'assistant',content:'未识别到文字，请确保图片清晰。'});
+      renderChat(); return;
+    }
+
+    // 替换上一条用户消息
+    chatHistory[chatHistory.length-1] = {role:'user',content:'请帮我分析这道题目：\n'+ocrText};
+
+    // 发送给 AI
+    const resp = await fetch('https://api.deepseek.com/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
+      body:JSON.stringify({
+        model:apiModel,
+        messages:[
+          {role:'system',content:'你是公考辅导专家。用户上传了题目截图，经OCR识别后发给你。请仔细分析题目，给出解答思路和答案。如果是选择题，逐一分析每个选项。'},
+          ...chatHistory.slice(-10)
+        ],
+        max_tokens:1000,
+        temperature:0.3
+      })
+    });
+    const data = await resp.json();
+    if(data.choices && data.choices[0]){
+      chatHistory.push({role:'assistant',content:data.choices[0].message.content});
+    } else {
+      chatHistory.push({role:'assistant',content:'请求失败：'+JSON.stringify(data)});
+    }
+    renderChat();
+  }catch(e){
+    chatHistory.push({role:'assistant',content:'识别出错：'+e.message});
+    renderChat();
+  }
+  event.target.value = '';
+}
 
 function sendChat(){
   const input = document.getElementById('chatInput');
