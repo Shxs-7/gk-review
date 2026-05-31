@@ -582,7 +582,7 @@ function renderList(){
     let body = '<div class="content">'+escHtml(e.content)+'</div>';
     if(e.meaning) body += '<div class="note" style="white-space:pre-line">'+escHtml(e.meaning)+'</div>';
     if(e.note) body += '<div class="note" style="white-space:pre-line;color:#999">'+escHtml(e.note)+'</div>';
-    return \`<div class="card">
+    return `<div class="card">
       <span class="tag ${tagCls[e.cat]}">${tagMap[e.cat]}</span>
       <span class="tag ${e.mastered?'tag-mastered':'tag-unmastered'}">${e.mastered?'已掌握':'未掌握'}</span>
       ${body}
