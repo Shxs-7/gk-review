@@ -1090,23 +1090,30 @@ function scrollChat(){
 }
 
 function saveChatAnswer(idx){
-  document.getElementById('page-chat').insertAdjacentHTML('beforeend','<div class="modal-overlay show" id="saveChatModal"><div class="modal"><h3>保存到</h3><select id="saveChatCat"><option value="idiom">成语</option><option value="vocab">实词</option><option value="quote">金句</option><option value="knowledge">常识</option></select><div style="margin-top:10px;display:flex;gap:8px;justify-content:center"><button class="btn btn-primary btn-sm" onclick="confirmSaveChat('+idx+')">保存</button><button class="btn btn-outline btn-sm" onclick="document.getElementById('saveChatModal').remove()">取消</button></div></div></div>');
+  // Build modal with DOM
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay show';
+  overlay.id = 'saveChatModal';
+  overlay.innerHTML = '<div class="modal"><h3>保存到</h3><select id="saveChatCat"><option value="idiom">成语</option><option value="vocab">实词</option><option value="quote">金句</option><option value="knowledge">常识</option></select><div style="margin-top:10px;display:flex;gap:8px;justify-content:center"><button class="btn btn-primary btn-sm" id="saveChatConfirmBtn">保存</button><button class="btn btn-outline btn-sm" id="saveChatCancelBtn">取消</button></div></div>';
+  document.getElementById('page-chat').appendChild(overlay);
+  document.getElementById('saveChatCancelBtn').onclick = function(){ overlay.remove(); };
+  document.getElementById('saveChatConfirmBtn').onclick = function(){ confirmSaveChat(idx); };
 }
 
 function confirmSaveChat(idx){
-  const cat = document.getElementById('saveChatCat').value;
-  const text = (window._chatTexts||{})[idx] || '';
+  var cat = document.getElementById('saveChatCat').value;
+  var text = (window._chatTexts||{})[idx] || '';
   document.getElementById('saveChatModal').remove();
   if(!text) return;
-  const lines = text.split('\n').filter(l=>l.trim());
-  const content = lines[0] ? lines[0].slice(0,30) : text.slice(0,30);
-  entries.push({id:nextId(),cat,content,meaning:text,note:'',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()});
+  var lines = text.split('\n').filter(function(l){ return l.trim(); });
+  var content = lines[0] ? lines[0].slice(0,30) : text.slice(0,30);
+  entries.push({id:nextId(),cat:cat,content:content,meaning:text,note:'',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()});
   save();
-  const names = {idiom:'成语',vocab:'实词',quote:'金句',knowledge:'常识'};
+  var names = {idiom:'成语',vocab:'实词',quote:'金句',knowledge:'常识'};
   showToast('已保存到'+names[cat]);
 }
 
-// ==================== 初始化 ====================
+// ==================== 初始化// ==================== 初始化 ====================
 migrate(); seedData(); loadApiKey(); onCategoryChange(); doRandom();
 </script>
 </body>
