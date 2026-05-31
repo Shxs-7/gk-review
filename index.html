@@ -496,6 +496,9 @@ function doRandom(){
     return;
   }
 
+  const tagMap = {idiom:'成语',vocab:'实词',quote:'金句',knowledge:'常识'};
+  const tagCls = {idiom:'tag-idiom',vocab:'tag-vocab',quote:'tag-quote',knowledge:'tag-knowledge'};
+
   // 加权排序：未掌握优先，复习次数少的优先
   pool.sort((a,b)=>{
     if(a.mastered!==b.mastered) return a.mastered ? 1 : -1;
@@ -573,11 +576,13 @@ function renderList(){
     return;
   }
 
+  const tagMap = {idiom:'成语',vocab:'实词',quote:'金句',knowledge:'常识'};
+  const tagCls = {idiom:'tag-idiom',vocab:'tag-vocab',quote:'tag-quote',knowledge:'tag-knowledge'};
   document.getElementById('listDisplay').innerHTML = list.map(e=>{
-    let body = e.cat==='idiom'
-      ? `<div class="content">${e.content}</div>${e.meaning?`<div class="note" style="white-space:pre-line">${e.meaning}</div>`:''}`
-      : `<div class="content">${e.content}</div>${e.note?`<div class="note" style="white-space:pre-line">${e.note}</div>`:''}`;
-    return `<div class="card">
+    let body = '<div class="content">'+escHtml(e.content)+'</div>';
+    if(e.meaning) body += '<div class="note" style="white-space:pre-line">'+escHtml(e.meaning)+'</div>';
+    if(e.note) body += '<div class="note" style="white-space:pre-line;color:#999">'+escHtml(e.note)+'</div>';
+    return '<div class="card">
       <span class="tag ${tagCls[e.cat]}">${tagMap[e.cat]}</span>
       <span class="tag ${e.mastered?'tag-mastered':'tag-unmastered'}">${e.mastered?'已掌握':'未掌握'}</span>
       ${body}
