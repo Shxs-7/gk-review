@@ -38,7 +38,9 @@ main{padding:16px;max-width:700px;margin:0 auto}
 }
 .tag{display:inline-block;padding:2px 10px;border-radius:10px;font-size:.7rem;margin-bottom:8px}
 .tag-idiom{background:#e8f0fe;color:#2563eb}
-.tag-quote{background:#e8f0fe;color:#2563eb}
+.tag-vocab{background:#fef3e0;color:#b85c00}
+.tag-quote{background:#e8fce8;color:#1a7a1a}
+.tag-knowledge{background:#f3e8ff;color:#7c3aed}
 .tag-mastered{background:#e8fce8;color:#1a7a1a}
 .tag-unmastered{background:#fef3e0;color:#b85c00}
 
@@ -178,7 +180,9 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
       <select id="reviewFilter" style="flex:1" onchange="doRandom()">
         <option value="all">全部</option>
         <option value="idiom">成语</option>
-        <option value="quote">名句</option>
+        <option value="vocab">实词</option>
+        <option value="quote">金句</option>
+        <option value="knowledge">常识</option>
         <option value="unmastered">未掌握</option>
       </select>
       <button class="btn btn-primary btn-sm" onclick="doRandom()">随机</button>
@@ -197,16 +201,29 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
 
       <div id="fields-idiom" class="form-group">
         <label>成语</label>
-        <input type="text" id="idiomWord" placeholder="例如：差强人意" required>
+        <input type="text" id="idiomWord" placeholder="例如：差强人意">
         <label>释义</label>
-        <textarea id="idiomMeaning" placeholder="成语的意思和考点..." required></textarea>
+        <textarea id="idiomMeaning" placeholder="成语的意思和考点..."></textarea>
       </div>
-
+      <div id="fields-vocab" class="form-group hidden">
+        <label>词语</label>
+        <input type="text" id="vocabWord" placeholder="例如：遏制">
+        <label>释义</label>
+        <textarea id="vocabMeaning" placeholder="词语的意思..."></textarea>
+        <label>近义辨析</label>
+        <textarea id="vocabDiff" placeholder="与近义词的区别..."></textarea>
+      </div>
       <div id="fields-quote" class="form-group hidden">
-        <label>名句原文</label>
-        <textarea id="quoteText" placeholder="输入名句原文..." required></textarea>
-        <label>出处 / 解释</label>
-        <textarea id="quoteNote" placeholder="可选"></textarea>
+        <label>金句原文</label>
+        <textarea id="quoteText" placeholder="输入金句原文..."></textarea>
+        <label>出处 / 主题</label>
+        <input type="text" id="quoteNote" placeholder="《xxx》·作者 / 适用话题">
+      </div>
+      <div id="fields-knowledge" class="form-group hidden">
+        <label>常识标题</label>
+        <input type="text" id="knowTitle" placeholder="例如：我国四大发明">
+        <label>内容</label>
+        <textarea id="knowContent" placeholder="常识详细内容..."></textarea>
       </div>
 
       <button class="btn btn-primary btn-block" style="margin-top:14px" type="submit" id="submitBtn">添加</button>
@@ -220,7 +237,9 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
       <select id="listFilter" onchange="renderList()" style="width:auto;min-width:80px">
         <option value="all">全部</option>
         <option value="idiom">成语</option>
-        <option value="quote">名句</option>
+        <option value="vocab">实词</option>
+        <option value="quote">金句</option>
+        <option value="knowledge">常识</option>
         <option value="mastered">已掌握</option>
         <option value="unmastered">未掌握</option>
       </select>
@@ -246,9 +265,7 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
       <div class="chat-msgs" id="chatMsgs">
         <div class="chat-empty"><div class="icon">💬</div><p>AI 学习助手</p><p style="font-size:.8rem">提问公考相关问题</p></div>
       </div>
-      <input type="file" accept="image/*" capture="environment" id="chatImgInput" onchange="handleChatImage(event)" style="display:none">
       <div class="chat-input-row" style="padding:8px 16px">
-        <button class="btn btn-outline btn-sm" onclick="document.getElementById('chatImgInput').click()" style="font-size:1.2rem">📷</button>
         <input type="text" id="chatInput" placeholder="输入问题或拍照识别题目..." onkeydown="if(event.key==='Enter')sendChat()">
         <button class="btn btn-primary btn-sm" onclick="sendChat()">发送</button>
       </div>
@@ -280,8 +297,10 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
 为天地立心|张载"横渠四句""></textarea>
       <div style="display:flex;gap:8px;margin-top:8px">
         <select id="batchCategory" style="width:auto">
-          <option value="idiom">导入为成语</option>
-          <option value="quote">导入为名句</option>
+          <option value="idiom">成语</option>
+          <option value="vocab">实词</option>
+          <option value="quote">金句</option>
+          <option value="knowledge">常识</option>
         </select>
         <button class="btn btn-primary btn-sm" onclick="batchImport()">导入</button>
       </div>
@@ -358,11 +377,9 @@ function seedData(){
   entries = [
     {id:1,cat:'idiom',content:'差强人意',meaning:'大体上还能使人满意。\n⚠ 易错：不是"让人不满意"。',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()},
     {id:2,cat:'idiom',content:'首当其冲',meaning:'最先受到攻击或遭遇灾难。\n⚠ 易错：不是"冲在最前面"。',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()},
-    {id:3,cat:'idiom',content:'不刊之论',meaning:'不可磨灭的言论。"刊"是削除，不是"刊登"。',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()},
-    {id:4,cat:'idiom',content:'万人空巷',meaning:'家家户户的人都出来了，形容盛况。\n⚠ 易错：不是"巷子空了"。',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()},
-    {id:5,cat:'idiom',content:'七月流火',meaning:'农历七月大火星西沉，天气转凉。\n⚠ 易错：不是"热得像火"。',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()},
-    {id:6,cat:'quote',content:'治大国若烹小鲜',note:'《道德经》老子。治理大国像煎小鱼，少翻动，顺应自然。',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()},
-    {id:7,cat:'quote',content:'为天地立心，为生民立命，为往圣继绝学，为万世开太平',note:'张载"横渠四句"。宋代儒学最高理想，常作申论引用。',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()},
+    {id:3,cat:'vocab',content:'遏制',meaning:'制止，控制。',note:'近义辨析："遏制"重在制止，"遏止"重在停止。',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()},
+    {id:4,cat:'quote',content:'治大国若烹小鲜',note:'《道德经》老子。治理大国像煎小鱼，少翻动，顺应自然。',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()},
+    {id:5,cat:'knowledge',content:'我国四大发明',meaning:'造纸术、指南针、火药、印刷术。由英国学者李约瑟提出，最早由培根提及三大发明（印刷术、火药、指南针）。',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()},
   ];
   save();
 }
@@ -370,11 +387,10 @@ function seedData(){
 // ==================== 分类切换 ====================
 function onCategoryChange(){
   const cat = document.getElementById('addCategory').value;
-  document.getElementById('fields-idiom').classList.toggle('hidden',cat!=='idiom');
-  document.getElementById('fields-quote').classList.toggle('hidden',cat!=='quote');
-  document.getElementById('idiomWord').required = (cat==='idiom');
-  document.getElementById('idiomMeaning').required = (cat==='idiom');
-  document.getElementById('quoteText').required = (cat==='quote');
+  ['idiom','vocab','quote','knowledge'].forEach(c=>{
+    const el = document.getElementById('fields-'+c);
+    if(el) el.classList.toggle('hidden', cat!==c);
+  });
 }
 
 // ==================== UI 切换 ====================
@@ -406,17 +422,25 @@ function addEntry(e){
     content = document.getElementById('idiomWord').value.trim();
     meaning = document.getElementById('idiomMeaning').value.trim();
     if(!content) return showToast('请输入成语');
-  } else {
+  } else if(cat==='vocab'){
+    content = document.getElementById('vocabWord').value.trim();
+    meaning = document.getElementById('vocabMeaning').value.trim();
+    const diff = document.getElementById('vocabDiff').value.trim();
+    note = diff;
+    if(!content) return showToast('请输入词语');
+  } else if(cat==='quote'){
     content = document.getElementById('quoteText').value.trim();
     note = document.getElementById('quoteNote').value.trim();
-    if(!content) return showToast('请输入名句');
+    if(!content) return showToast('请输入金句');
+  } else if(cat==='knowledge'){
+    content = document.getElementById('knowTitle').value.trim();
+    meaning = document.getElementById('knowContent').value.trim();
+    if(!content) return showToast('请输入标题');
   }
   if(editId){
     const ex = entries.find(x=>x.id===editId);
     if(ex){
-      ex.cat=cat;ex.content=content;
-      if(cat==='idiom'){ex.meaning=meaning;ex.note='';}
-      else{ex.note=note;ex.meaning='';}
+      ex.cat=cat;ex.content=content;ex.meaning=meaning;ex.note=note;
       ex.ts=Date.now();
       showToast('已更新');
     }
@@ -434,8 +458,13 @@ function resetForm(){
   document.getElementById('addCategory').value='idiom';
   document.getElementById('idiomWord').value='';
   document.getElementById('idiomMeaning').value='';
+  document.getElementById('vocabWord').value='';
+  document.getElementById('vocabMeaning').value='';
+  document.getElementById('vocabDiff').value='';
   document.getElementById('quoteText').value='';
   document.getElementById('quoteNote').value='';
+  document.getElementById('knowTitle').value='';
+  document.getElementById('knowContent').value='';
   onCategoryChange();
   document.getElementById('submitBtn').textContent='添加';
 }
@@ -452,10 +481,10 @@ function batchImport(){
     const content = (parts[0]||'').trim();
     const extra = (parts[1]||'').trim();
     if(!content) return;
-    if(cat==='idiom'){
-      entries.push({id:nextId(),cat:'idiom',content,meaning:extra,note:'',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()});
+    if(cat==='idiom'||cat==='vocab'){
+      entries.push({id:nextId(),cat,content,meaning:extra,note:'',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()});
     } else {
-      entries.push({id:nextId(),cat:'quote',content,note:extra,meaning:'',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()});
+      entries.push({id:nextId(),cat,content,note:extra,meaning:'',mastered:false,reviewCount:0,lastReview:null,ts:Date.now()});
     }
     added++;
   });
@@ -471,9 +500,9 @@ let currentCardId = null;
 function doRandom(){
   const filter = document.getElementById('reviewFilter').value;
   let pool = entries;
-  if(filter==='idiom') pool = entries.filter(e=>e.cat==='idiom');
-  else if(filter==='quote') pool = entries.filter(e=>e.cat==='quote');
+  if(filter==='all') pool = entries;
   else if(filter==='unmastered') pool = entries.filter(e=>!e.mastered);
+  else pool = entries.filter(e=>e.cat===filter);
 
   if(!pool.length){
     document.getElementById('randomDisplay').innerHTML = `
@@ -492,17 +521,17 @@ function doRandom(){
   const e = top[Math.floor(Math.random()*top.length)];
   currentCardId = e.id;
 
-  const showMeaning = e.cat==='idiom'?e.meaning:e.note;
+  const showMeaning = (e.cat==='idiom'||e.cat==='vocab'||e.cat==='knowledge')?e.meaning:e.note;
   document.getElementById('randomDisplay').innerHTML = `
     <div class="flip-container" onclick="flipCard()">
       <div class="flip-card" id="flipCard">
         <div class="flip-face flip-front">
-          <span class="tag tag-idiom">${e.cat==='idiom'?'成语':'名句'}</span>
+          <span class="tag ${tagCls[e.cat]||'tag-idiom'}">${tagMap[e.cat]||'条目'}</span>
           <div class="content">${e.content}</div>
           <div class="hint">👆 点击翻转看答案</div>
         </div>
         <div class="flip-face flip-back">
-          <span class="tag tag-idiom">${e.cat==='idiom'?'释义':'出处'}</span>
+          <span class="tag ${tagCls[e.cat]||'tag-idiom'}">${e.cat==='idiom'||e.cat==='vocab'?'释义':'出处'}</span>
           <div class="content">${showMeaning||'(无)'}</div>
         </div>
       </div>
@@ -540,10 +569,9 @@ function renderList(){
   const q = (document.getElementById('searchInput').value||'').toLowerCase();
   const filter = document.getElementById('listFilter').value;
   let list = entries;
-  if(filter==='idiom') list = list.filter(e=>e.cat==='idiom');
-  else if(filter==='quote') list = list.filter(e=>e.cat==='quote');
-  else if(filter==='mastered') list = list.filter(e=>e.mastered);
+  if(filter==='mastered') list = list.filter(e=>e.mastered);
   else if(filter==='unmastered') list = list.filter(e=>!e.mastered);
+  else if(filter!=='all') list = list.filter(e=>e.cat===filter);
   if(q) list = list.filter(e=>e.content.includes(q)||(e.meaning||'').includes(q)||(e.note||'').includes(q));
   list.sort((a,b)=>b.ts-a.ts);
 
@@ -551,8 +579,9 @@ function renderList(){
   document.getElementById('statsBar').innerHTML = `
     <div class="stat"><div class="num">${entries.length}</div><div class="label">总计</div></div>
     <div class="stat"><div class="num">${entries.filter(e=>e.cat==='idiom').length}</div><div class="label">成语</div></div>
-    <div class="stat"><div class="num">${entries.filter(e=>e.cat==='quote').length}</div><div class="label">名句</div></div>
-    <div class="stat"><div class="num">${mastered}</div><div class="label">已掌握</div></div>`;
+    <div class="stat"><div class="num">${entries.filter(e=>e.cat==='vocab').length}</div><div class="label">实词</div></div>
+    <div class="stat"><div class="num">${entries.filter(e=>e.cat==='quote').length}</div><div class="label">金句</div></div>
+    <div class="stat"><div class="num">${entries.filter(e=>e.cat==='knowledge').length}</div><div class="label">常识</div></div>`;
 
   if(!list.length){
     document.getElementById('listDisplay').innerHTML = '<div class="empty"><p>暂无数据</p></div>';
@@ -564,7 +593,7 @@ function renderList(){
       ? `<div class="content">${e.content}</div>${e.meaning?`<div class="note" style="white-space:pre-line">${e.meaning}</div>`:''}`
       : `<div class="content">${e.content}</div>${e.note?`<div class="note" style="white-space:pre-line">${e.note}</div>`:''}`;
     return `<div class="card">
-      <span class="tag tag-idiom">${e.cat==='idiom'?'成语':'名句'}</span>
+      <span class="tag ${tagCls[e.cat]}">${tagMap[e.cat]}</span>
       <span class="tag ${e.mastered?'tag-mastered':'tag-unmastered'}">${e.mastered?'已掌握':'未掌握'}</span>
       ${body}
       <div style="margin-top:8px;display:flex;gap:8px">
@@ -580,7 +609,28 @@ function toggleMastered(id){
   if(e){ e.mastered = !e.mastered; save(); renderList(); }
 }
 
-function editEntry(id){ /* 同上 */ const e=entries.find(x=>x.id===id);if(!e)return;editId=id;switchPage('add');document.getElementById('addCategory').value=e.cat;if(e.cat==='idiom'){document.getElementById('idiomWord').value=e.content||'';document.getElementById('idiomMeaning').value=e.meaning||'';}else{document.getElementById('quoteText').value=e.content||'';document.getElementById('quoteNote').value=e.note||'';}onCategoryChange();document.getElementById('submitBtn').textContent='保存';showToast('修改后点击保存');}
+function editEntry(id){
+  const e=entries.find(x=>x.id===id);if(!e)return;
+  editId=id;switchPage('add');
+  document.getElementById('addCategory').value=e.cat;
+  if(e.cat==='idiom'){
+    document.getElementById('idiomWord').value=e.content||'';
+    document.getElementById('idiomMeaning').value=e.meaning||'';
+  }else if(e.cat==='vocab'){
+    document.getElementById('vocabWord').value=e.content||'';
+    document.getElementById('vocabMeaning').value=e.meaning||'';
+    document.getElementById('vocabDiff').value=e.note||'';
+  }else if(e.cat==='quote'){
+    document.getElementById('quoteText').value=e.content||'';
+    document.getElementById('quoteNote').value=e.note||'';
+  }else if(e.cat==='knowledge'){
+    document.getElementById('knowTitle').value=e.content||'';
+    document.getElementById('knowContent').value=e.meaning||'';
+  }
+  onCategoryChange();
+  document.getElementById('submitBtn').textContent='保存';
+  showToast('修改后点击保存');
+}
 
 // ==================== API Key ====================
 let apiKey = '', apiModel = 'deepseek-chat';
@@ -862,7 +912,7 @@ async function _doSearchAsync(q){
         const saveBtn = hasSaved
           ? '<span style="font-size:.75rem;color:#16a34a">✅ 已保存</span>'
           : '<button class="btn btn-green btn-sm" onclick="saveAIResult(this)">📥 保存到笔记</button>';
-        html += '<div class="card" id="aiCard"><span class="tag tag-idiom">🤖 AI 解析</span><div class="note" style="white-space:pre-line;line-height:1.9">'+escHtml(aiText)+'</div><div style="text-align:right;margin-top:10px">'+saveBtn+'</div></div>';
+        html += '<div class="card" id="aiCard"><span class="tag tag-idiom">🤖 AI 解析</span><div class="note" style="white-space:pre-line;line-height:1.9">'+escHtml(aiText)+'</div><div style="display:flex;gap:6px;align-items:center;margin-top:10px;flex-wrap:wrap"><select id="aiSaveCat" style="width:auto;flex:1;min-width:80px"><option value="idiom">成语</option><option value="vocab">实词</option><option value="quote">金句</option><option value="knowledge">常识</option></select>'+saveBtn+'</div></div>';
         window._aiQuery = q;
         window._aiText = aiText;
       }
@@ -881,8 +931,11 @@ function saveAIResult(btn){
   const aiText = window._aiText || '';
   if(!q || !aiText) return;
 
+  const selCat = document.getElementById('aiSaveCat');
+  const saveCat = selCat ? selCat.value : 'idiom';
+
   // 去重
-  if(entries.find(e=>e.content===q)){
+  if(entries.find(e=>e.content===q && e.cat===saveCat)){
     showToast('已存在，跳过');
     return;
   }
@@ -908,7 +961,7 @@ function saveAIResult(btn){
 
   entries.push({
     id:nextId(),
-    cat:'idiom',
+    cat:saveCat,
     content:q,
     meaning:fullMeaning.trim(),
     note:'',
@@ -922,7 +975,8 @@ function saveAIResult(btn){
   if(btn) btn.outerHTML = '<span style="font-size:.75rem;color:#16a34a">✅ 已保存</span>';
 }
 
-function deleteEntry(id){ const e=entries.find(x=>x.id===id);if(!e)return;const label=e.cat==='idiom'?`成语「${e.content}」`:`名句「${e.content.slice(0,20)}...」`;showModal('确认删除',`删除 ${label}？`,()=>{entries=entries.filter(x=>x.id!==id);save();if(currentPage==='review')doRandom();if(currentPage==='list')renderList();});}
+function deleteEntry(id){ const e=entries.find(x=>x.id===id);if(!e)return;const tagMap={idiom:'成语',vocab:'实词',quote:'金句',knowledge:'常识'};
+  const label=`${tagMap[e.cat]||'条目'}「${e.content.slice(0,20)}...」`;showModal('确认删除',`删除 ${label}？`,()=>{entries=entries.filter(x=>x.id!==id);save();if(currentPage==='review')doRandom();if(currentPage==='list')renderList();});}
 
 function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -984,56 +1038,6 @@ function showToast(msg){
 // ==================== 聊天 ====================
 let chatHistory = [];
 
-async function handleChatImage(event){
-  const file = event.target.files[0];
-  if(!file) return;
-  if(!apiKey){ showToast('请先在设置页保存 API Key'); return; }
-
-  // 显示用户发了图片
-  chatHistory.push({role:'user',content:'[上传了一张题目图片]'});
-  renderChat();
-  document.getElementById('chatMsgs').innerHTML += '<div class="chat-msg ai"><div class="chat-bubble"><div class="spinner"></div> 识别中...</div></div>';
-  scrollChat();
-
-  try{
-    // OCR 识别
-    const worker = await Tesseract.recognize(file, 'chi_sim+eng');
-    const ocrText = worker.data.text.trim();
-    if(!ocrText){
-      chatHistory.push({role:'assistant',content:'未识别到文字，请确保图片清晰。'});
-      renderChat(); return;
-    }
-
-    // 替换上一条用户消息
-    chatHistory[chatHistory.length-1] = {role:'user',content:'请帮我分析这道题目：\n'+ocrText};
-
-    // 发送给 AI
-    const resp = await fetch('https://api.deepseek.com/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
-      body:JSON.stringify({
-        model:apiModel,
-        messages:[
-          {role:'system',content:'你是公考辅导专家。用户上传了题目截图，经OCR识别后发给你。请仔细分析题目，给出解答思路和答案。如果是选择题，逐一分析每个选项。'},
-          ...chatHistory.slice(-10)
-        ],
-        max_tokens:1000,
-        temperature:0.3
-      })
-    });
-    const data = await resp.json();
-    if(data.choices && data.choices[0]){
-      chatHistory.push({role:'assistant',content:data.choices[0].message.content});
-    } else {
-      chatHistory.push({role:'assistant',content:'请求失败：'+JSON.stringify(data)});
-    }
-    renderChat();
-  }catch(e){
-    chatHistory.push({role:'assistant',content:'识别出错：'+e.message});
-    renderChat();
-  }
-  event.target.value = '';
-}
 
 function sendChat(){
   const input = document.getElementById('chatInput');
