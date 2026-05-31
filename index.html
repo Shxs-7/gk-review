@@ -139,13 +139,6 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
 }
 @keyframes spin{to{transform:rotate(360deg)}}
 
-.ocr-result{max-height:200px;overflow-y:auto}
-.ocr-result label{
-  display:flex; align-items:flex-start; gap:8px; cursor:pointer;
-  padding:8px 0; border-bottom:1px solid #f0f0f0;
-  font-weight:400; color:#333; margin:0; font-size:.9rem;
-}
-.ocr-result input{margin-top:4px; width:auto}
 
 /* Chat */
 .chat-area{display:flex;flex-direction:column;height:calc(100dvh - 52px)}
@@ -350,7 +343,6 @@ hr.divider{width:30px;margin:14px auto;border:none;border-top:2px solid #e2e8f0}
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
 // ==================== 数据模型 ====================
 // {cat, content, meaning, note, mastered:false, reviewCount:0, lastReview:null, ts}
